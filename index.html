@@ -2622,7 +2622,8 @@
 </script>
 <script>
   const supabase = window.supabase.createClient(
-    'https://umsgoqdmdqxxaxmubcdp.supabase.co/rest/v1/', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtc2dvcWRtZHF4eGF4bXViY2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzkxOTksImV4cCI6MjA5MzM1NTE5OX0.cceprmYY9bWyMVbPgAT0VoM7WXqV6T0suRnus9mLMdU'
+    'https://umsgoqdmdqxxaxmubcdp.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtc2dvcWRtZHF4eGF4bXViY2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzkxOTksImV4cCI6MjA5MzM1NTE5OX0.cceprmYY9bWyMVbPgAT0VoM7WXqV6T0suRnus9mLMdU'
   );
 
   async function loadProducts() {
@@ -2638,8 +2639,22 @@
         )
       `);
 
-    if (error) { console.error(error); return; }
+    if (error) { 
+      console.error('Supabase error:', error); 
+      document.getElementById('loadingText').textContent = 'Error loading prices — check console';
+      return; 
+    }
+    if (!products || products.length === 0) {
+      console.warn('No products found in database');
+      document.getElementById('loadingText').textContent = 'No products in database yet';
+      return;
+    }
     console.log('Products from DB:', products);
+    // Hide the loading bar once data arrives
+    const loadingStatus = document.getElementById('loadingStatus');
+    const loadingBar = document.getElementById('loadingBar');
+    if (loadingStatus) loadingStatus.style.display = 'none';
+    if (loadingBar) loadingBar.style.display = 'none';
     renderProducts(products);
   }
 
