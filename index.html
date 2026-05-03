@@ -1480,6 +1480,7 @@
     .quick-chip{font-size:11px;padding:5px 10px;}
   }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -2619,6 +2620,80 @@
     }
   });
 </script>
+<script>
+  const supabase = window.supabase.createClient(
+    'https://umsgoqdmdqxxaxmubcdp.supabase.co/rest/v1/', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtc2dvcWRtZHF4eGF4bXViY2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzkxOTksImV4cCI6MjA5MzM1NTE5OX0.cceprmYY9bWyMVbPgAT0VoM7WXqV6T0suRnus9mLMdU'
+  );
 
+  async function loadProducts() {
+    const { data: products, error } = await supabase
+      .from('products')
+      .select(`
+        id, brand, name, category, size,
+        prices (
+          current_price,
+          was_price,
+          affiliate_url,
+          retailers ( name, slug )
+        )
+      `);
+
+    if (error) { console.error(error); return; }
+    console.log('Products from DB:', products);
+    renderProducts(products);
+  }
+
+  function renderProducts(products) {
+    const container = document.querySelector('#compare .section-inner');
+    if (!container) return;
+
+    // Find existing product cards and remove them
+    container.querySelectorAll('.product-card').forEach(c => c.remove());
+
+    products.forEach(p => {
+      // Sort prices low to high
+      const sorted = [...p.prices].sort((a, b) => a.current_price - b.current_price);
+      const lowest = sorted[0];
+      const highest = sorted[sorted.length - 1];
+      const savings = highest.current_price - lowest.current_price;
+
+      const card = document.createElement('div');
+      card.className = 'product-card open';
+      card.innerHTML = `
+        <div class="product-summary">
+          <div class="product-info">
+            <div class="brand">${p.brand}</div>
+            <h3>${p.name}</h3>
+            <div class="meta">
+              <span>${p.size || ''}</span>
+              <span class="dot">·</span>
+              <span>${p.category || ''}</span>
+            </div>
+          </div>
+          <div class="product-price-summary">
+            <div class="from">From</div>
+            <div class="price">₹${lowest.current_price.toLocaleString('en-IN')}</div>
+            <div class="save">↓ Save ₹${savings.toLocaleString('en-IN')} vs highest</div>
+          </div>
+        </div>
+        <div class="retailer-list" style="padding:20px 32px;border-top:1px solid var(--line);">
+          ${sorted.map(price => `
+            <a href="${price.affiliate_url}"
+               target="_blank" rel="noopener sponsored"
+               style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);">
+              <span><strong>${price.retailers.name}</strong></span>
+              <span>₹${price.current_price.toLocaleString('en-IN')}
+                ${price.was_price ? `<s style="color:var(--ink-faint);margin-left:8px;">₹${price.was_price.toLocaleString('en-IN')}</s>` : ''}
+              </span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  loadProducts();
+</script>
 </body>
 </html>
