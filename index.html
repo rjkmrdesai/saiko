@@ -1635,7 +1635,7 @@
     </div>
 
     <div class="results-toolbar">
-      <div class="results-count"><strong>4 products</strong> · 20 retailers tracked · prices include shipping &amp; codes</div>
+      <div class="results-count" id="resultsCount"><strong>Loading…</strong></div>
       <div class="results-sort">
         <span>Sort by</span>
         <select>
@@ -2631,34 +2631,77 @@
   );
 
   let ALL_PRODUCTS = [];
+  let RETAILER_COUNT = 0;
+
+  // ============================================
+  // RETAILER LOGOS — SVG fallbacks if logo_url is empty
+  // Maps retailer slug → inline SVG matching original design
+  // ============================================
+  const RETAILER_LOGO_SVG = {
+    'nykaa':    '<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FC2779"/><text x="16" y="22" font-family="sans-serif" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg>',
+    'tira':     '<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="20" font-family="sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.5">TIRA</text></svg>',
+    'flipkart': '<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#2874F0"/><text x="16" y="14" font-family="sans-serif" font-size="6" font-weight="700" fill="#FFE500" text-anchor="middle">Flipkart</text><text x="16" y="22" font-family="sans-serif" font-size="3" font-style="italic" fill="#fff" text-anchor="middle">Explore Plus</text></svg>',
+    'purplle':  '<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#8E44CC"/><text x="16" y="20" font-family="sans-serif" font-size="9" font-weight="700" fill="#fff" text-anchor="middle">purplle</text></svg>',
+    'sephora':  '<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="12" font-family="sans-serif" font-size="4.5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.3">SEPHORA</text><line x1="6" y1="15" x2="26" y2="15" stroke="#fff" stroke-width="0.5"/><text x="16" y="23" font-family="serif" font-size="6" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg>'
+  };
+  const RETAILER_DOMAIN = {
+    'nykaa': 'nykaa.com',
+    'tira': 'tirabeauty.com',
+    'flipkart': 'flipkart.com',
+    'purplle': 'purplle.com',
+    'sephora': 'sephora.nnnow.com'
+  };
+
+  // ============================================
+  // GENERIC PRODUCT IMAGE FALLBACK (when no image_url)
+  // ============================================
+  function defaultProductImage(brand, name) {
+    const initial = (brand || name || '?').charAt(0).toUpperCase();
+    return `<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+      <rect width="96" height="96" fill="#F4DCD9"/>
+      <text x="48" y="58" font-family="serif" font-size="40" font-style="italic" fill="#2B1810" text-anchor="middle">${initial}</text>
+    </svg>`;
+  }
 
   // ============================================
   // LOAD PRODUCTS FROM SUPABASE
   // ============================================
   async function loadProducts() {
+    // Get retailer count first
+    const { count: retailerCount } = await supabaseClient
+      .from('retailers')
+      .select('*', { count: 'exact', head: true });
+    RETAILER_COUNT = retailerCount || 0;
+
     const { data: products, error } = await supabaseClient
       .from('products')
       .select(`
-        id, brand, name, category, size, is_trending, is_drop,
+        id, brand, name, category, size, image_url, is_trending, is_drop,
         prices (
           current_price,
           was_price,
           affiliate_url,
-          retailers ( name, slug )
+          in_stock,
+          shipping_cost,
+          promo_code,
+          retailers ( name, slug, logo_url )
         )
       `);
 
     if (error) {
       console.error('Supabase error:', error);
+      const c = document.getElementById('resultsCount');
+      if (c) c.innerHTML = '<strong>Error loading data — check console</strong>';
       return;
     }
     if (!products || products.length === 0) {
-      console.warn('No products in database yet');
+      const c = document.getElementById('resultsCount');
+      if (c) c.innerHTML = '<strong>No products in database yet</strong>';
       return;
     }
-    console.log('✓ Products loaded from DB:', products);
+    console.log('✓ Products loaded:', products);
 
-    // Hide loading status if it exists
+    // Hide loading bar in hero
     const loadingStatus = document.getElementById('loadingStatus');
     const loadingBar = document.getElementById('loadingBar');
     if (loadingStatus) loadingStatus.style.display = 'none';
@@ -2669,7 +2712,7 @@
   }
 
   // ============================================
-  // FUZZY MATCH — bigram similarity (0 to 1)
+  // FUZZY MATCH (bigram similarity, 0–1)
   // ============================================
   function fuzzyScore(query, target) {
     if (!query || !target) return 0;
@@ -2677,69 +2720,100 @@
     const t = target.toLowerCase().trim();
     if (t.includes(q)) return 1;
     if (q.length < 2) return 0;
-
-    const bigrams = (s) => {
-      const arr = [];
-      for (let i = 0; i < s.length - 1; i++) arr.push(s.slice(i, i + 2));
-      return arr;
-    };
-
-    const qBg = bigrams(q);
-    const tBg = bigrams(t);
-    if (qBg.length === 0 || tBg.length === 0) return 0;
-
+    const bigrams = (s) => { const a=[]; for(let i=0;i<s.length-1;i++) a.push(s.slice(i,i+2)); return a; };
+    const qBg = bigrams(q), tBg = bigrams(t);
+    if (!qBg.length || !tBg.length) return 0;
     let matches = 0;
     const tCopy = [...tBg];
-    qBg.forEach(bg => {
-      const idx = tCopy.indexOf(bg);
-      if (idx !== -1) { matches++; tCopy.splice(idx, 1); }
-    });
+    qBg.forEach(bg => { const i = tCopy.indexOf(bg); if (i !== -1) { matches++; tCopy.splice(i,1); } });
     return (2 * matches) / (qBg.length + tBg.length);
   }
 
-  // ============================================
-  // SEARCH PRODUCTS (filter at 60%+ match)
-  // ============================================
   function searchProducts(query) {
-    if (!query || query.trim() === '') {
-      renderProducts(ALL_PRODUCTS);
-      return;
-    }
-    const scored = ALL_PRODUCTS.map(p => {
-      const fullName = `${p.brand} ${p.name}`;
-      const score = Math.max(
-        fuzzyScore(query, fullName),
+    if (!query || query.trim() === '') { renderProducts(ALL_PRODUCTS); return; }
+    const scored = ALL_PRODUCTS.map(p => ({
+      product: p,
+      score: Math.max(
+        fuzzyScore(query, `${p.brand} ${p.name}`),
         fuzzyScore(query, p.name),
         fuzzyScore(query, p.brand)
-      );
-      return { product: p, score };
-    });
-    const matched = scored
-      .filter(s => s.score >= 0.6)
-      .sort((a, b) => b.score - a.score)
-      .map(s => s.product);
-
-    if (matched.length === 0) {
-      renderEmptyState(query);
-    } else {
-      renderProducts(matched);
-    }
+      )
+    }));
+    const matched = scored.filter(s => s.score >= 0.6).sort((a,b)=>b.score-a.score).map(s=>s.product);
+    if (matched.length === 0) renderEmptyState(query);
+    else renderProducts(matched);
   }
 
   // ============================================
-  // BUILD A SINGLE PRODUCT CARD
+  // BUILD A PRODUCT CARD (matches original DOM)
   // ============================================
   function buildCard(p, isTrendingTag = false) {
     if (!p.prices || p.prices.length === 0) return null;
-    const sorted = [...p.prices].sort((a, b) => a.current_price - b.current_price);
+    const sorted = [...p.prices].sort((a,b) => a.current_price - b.current_price);
     const lowest = sorted[0];
     const highest = sorted[sorted.length - 1];
     const savings = highest.current_price - lowest.current_price;
 
     const card = document.createElement('div');
     card.className = 'product-card open';
+
+    // Product image — use uploaded URL or fallback SVG
+    const imgHTML = p.image_url
+      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.outerHTML='${defaultProductImage(p.brand, p.name).replace(/'/g, '&apos;')}'"/>`
+      : defaultProductImage(p.brand, p.name);
+
+    // Pip strip (mini logos) under the brand
+    const pipsHTML = sorted.map(price => {
+      const slug = price.retailers.slug;
+      const logo = price.retailers.logo_url
+        ? `<img src="${price.retailers.logo_url}" alt="${price.retailers.name}" style="width:100%;height:100%;object-fit:cover;"/>`
+        : (RETAILER_LOGO_SVG[slug] || `<svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#888"/></svg>`);
+      return `<div class="store-pip">${logo}</div>`;
+    }).join('');
+
+    // Retailer table rows
+    const rowsHTML = sorted.map((price, i) => {
+      const slug = price.retailers.slug;
+      const logo = price.retailers.logo_url
+        ? `<img src="${price.retailers.logo_url}" alt="${price.retailers.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"/>`
+        : (RETAILER_LOGO_SVG[slug] || `<svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#888"/></svg>`);
+      const domain = RETAILER_DOMAIN[slug] || slug;
+      const isBest = i === 0;
+      const stockHTML = price.in_stock
+        ? '<span class="stock-tag in">In stock</span>'
+        : '<span class="stock-tag out" style="background:#FEE;color:#A33;">Out of stock</span>';
+      const shippingHTML = price.shipping_cost === 0 || price.shipping_cost == null
+        ? 'Free shipping'
+        : `₹${Number(price.shipping_cost).toLocaleString('en-IN')} shipping`;
+      const perksHTML = price.promo_code
+        ? `<div class="perks"><span class="perk code">${price.promo_code}</span></div>`
+        : '<div class="perks"><span class="perk" style="opacity:0.5;">—</span></div>';
+      const priceHTML = price.was_price && price.was_price > price.current_price
+        ? `<span class="old">₹${Number(price.was_price).toLocaleString('en-IN')}</span>₹${Number(price.current_price).toLocaleString('en-IN')}`
+        : `₹${Number(price.current_price).toLocaleString('en-IN')}`;
+      return `
+        <tr class="retailer-row${isBest ? ' best' : ''}">
+          <td>
+            <div class="retailer-cell-name">
+              <div class="retailer-logo">${logo}</div>
+              <div>
+                <div class="name">${price.retailers.name}${isBest ? ' <span class="badge">Best</span>' : ''}</div>
+                <div class="sub">${domain}</div>
+              </div>
+            </div>
+          </td>
+          <td>${stockHTML}</td>
+          <td class="ship-cell">${shippingHTML}</td>
+          <td>${perksHTML}</td>
+          <td class="price-cell">${priceHTML}</td>
+          <td class="go-cell"><a href="${price.affiliate_url}" target="_blank" rel="noopener sponsored" class="go-btn">Visit store →</a></td>
+        </tr>
+      `;
+    }).join('');
+
     card.innerHTML = `
       <div class="product-summary">
+        <div class="product-img bg-brick">${imgHTML}</div>
         <div class="product-info">
           <div class="brand">${p.brand}${isTrendingTag ? ' <span style="font-size:10px;color:var(--accent);margin-left:8px;letter-spacing:1.5px;">TRENDING</span>' : ''}</div>
           <h3>${p.name}</h3>
@@ -2749,30 +2823,37 @@
             <span>${p.category || ''}</span>
           </div>
         </div>
+        <div class="product-stores">
+          <span class="label">${sorted.length} retailer${sorted.length === 1 ? '' : 's'}</span>
+          <div class="stores-row">${pipsHTML}</div>
+        </div>
         <div class="product-price-summary">
           <div class="from">From</div>
-          <div class="price">₹${lowest.current_price.toLocaleString('en-IN')}</div>
-          ${savings > 0 ? `<div class="save">↓ Save ₹${savings.toLocaleString('en-IN')} vs highest</div>` : ''}
+          <div class="price">₹${Number(lowest.current_price).toLocaleString('en-IN')}<span class="expand-icon">▾</span></div>
+          ${savings > 0 ? `<div class="save">↓ Save ₹${Number(savings).toLocaleString('en-IN')} vs highest</div>` : ''}
         </div>
       </div>
-      <div class="retailer-list" style="padding:20px 32px;border-top:1px solid var(--line);">
-        ${sorted.map((price, i) => `
-          <a href="${price.affiliate_url}"
-             target="_blank" rel="noopener sponsored"
-             style="display:flex;justify-content:space-between;padding:14px 0;${i < sorted.length - 1 ? 'border-bottom:1px solid var(--line);' : ''}text-decoration:none;color:var(--ink);">
-            <span><strong>${price.retailers.name}</strong>${i === 0 ? ' <span style="color:var(--accent);font-size:11px;margin-left:8px;letter-spacing:1px;">LOWEST</span>' : ''}</span>
-            <span>₹${price.current_price.toLocaleString('en-IN')}
-              ${price.was_price && price.was_price > price.current_price ? `<s style="color:var(--ink-faint);margin-left:8px;">₹${price.was_price.toLocaleString('en-IN')}</s>` : ''}
-            </span>
-          </a>
-        `).join('')}
+      <div class="product-retailers">
+        <table class="retailer-table">
+          <thead>
+            <tr>
+              <th>Retailer</th>
+              <th>Stock</th>
+              <th>Shipping</th>
+              <th>Perks</th>
+              <th class="right">Price</th>
+              <th class="right"></th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
       </div>
     `;
     return card;
   }
 
   // ============================================
-  // RENDER PRODUCTS INTO COMPARE SECTION
+  // RENDER PRODUCTS
   // ============================================
   function renderProducts(products) {
     const container = document.querySelector('#compare .section-inner');
@@ -2782,10 +2863,12 @@
       const card = buildCard(p);
       if (card) container.appendChild(card);
     });
+    const c = document.getElementById('resultsCount');
+    if (c) c.innerHTML = `<strong>${products.length} product${products.length === 1 ? '' : 's'}</strong> · ${RETAILER_COUNT} retailers tracked · prices include shipping &amp; codes`;
   }
 
   // ============================================
-  // EMPTY STATE — when search has no results
+  // EMPTY STATE
   // ============================================
   function renderEmptyState(query) {
     const container = document.querySelector('#compare .section-inner');
@@ -2804,7 +2887,7 @@
         Either it's not in our index yet, or the spelling is slightly off. Here's what's trending right now instead — chances are good your next favourite is below.
       </p>
       <p style="color:var(--ink-faint);font-size:13px;margin:16px 0 0 0;">
-        Want us to track this product? <a href="#alerts" style="color:var(--accent);text-decoration:underline;">Set a price alert</a> and we'll add it to our index.
+        Want us to track this product? <a href="#alerts" style="color:var(--accent);text-decoration:underline;">Set a price alert</a> and we'll add it.
       </p>
     `;
     container.appendChild(empty);
@@ -2815,10 +2898,13 @@
       const card = buildCard(p, true);
       if (card) container.appendChild(card);
     });
+
+    const c = document.getElementById('resultsCount');
+    if (c) c.innerHTML = `<strong>0 matches for "${query}"</strong> · showing trending instead`;
   }
 
   // ============================================
-  // WIRE UP THE SEARCH BAR
+  // SEARCH BAR WIRING
   // ============================================
   function setupSearch() {
     const input = document.querySelector('.search-input');
@@ -2829,11 +2915,8 @@
       searchProducts(input.value);
       document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-
     btn.addEventListener('click', doSearch);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
-    });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
 
     let typingTimer;
     input.addEventListener('input', () => {
