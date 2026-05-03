@@ -1,6 +1,6 @@
 # Saiko
 
-> The independent beauty price index for India.
+> The independent beauty price index for India. (this is not a real website yet)
 
 Saiko is a price-comparison engine for cosmetics — a Skyscanner for beauty. It pulls live prices across 240+ retailers (Nykaa, Tira, Sephora India, Cult Beauty, Lookfantastic, brand-direct stores, and more), folds in shipping, taxes, and active discount codes, and surfaces the real number you'd pay at checkout.
 
