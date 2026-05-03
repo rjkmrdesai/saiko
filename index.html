@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Saiko — the beauty price index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bone:#FAF6F0;
+    --bone-2:#F4ECDD;
+    --bone-3:#EBE0CB;
+    --caramel:#C7956D;
+    --caramel-deep:#A87850;
+    --brick:#B85C57;
+    --brick-deep:#8E433F;
+    --sage:#5C6B4F;
+    --sage-deep:#3F4B36;
+    --cocoa:#2B1810;
+    --cocoa-soft:#4A3326;
+    --ink:#2B1810;
+    --ink-dim:#6B5A47;
+    --ink-faint:#8B7558;
+    --line:rgba(43,24,16,0.10);
+    --line-strong:rgba(43,24,16,0.18);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bone);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    line-height:1.55;
+    overflow-x:hidden;
+    font-feature-settings:"ss01","cv11";
+  }
+
+  ::selection{background:var(--caramel);color:var(--bone);}
+
+  /* TOP BAR */
+  .topbar{
+    position:sticky;top:0;
+    background:var(--bone);
+    border-bottom:1px solid var(--line);
+    z-index:100;
+  }
+  .topbar-inner{
+    max-width:1400px;margin:0 auto;
+    padding:14px 32px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:24px;
+  }
+  .topbar-right{display:flex;align-items:center;justify-self:end;}
+  .login-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 16px;
+    background:transparent;
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .login-btn:hover{
+    background:var(--ink);color:var(--bone);
+    border-color:var(--ink);
+  }
+  .login-btn svg{width:14px;height:14px;}
+  .logo{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:32px;
+    letter-spacing:-0.025em;
+    color:var(--ink);
+    line-height:1;
+    text-decoration:none;
+  }
+  .topbar-nav{
+    display:flex;align-items:center;gap:28px;
+    justify-self:center;
+  }
+  .topbar-nav a{
+    color:var(--ink);
+    text-decoration:none;
+    font-size:14px;
+    font-weight:400;
+    transition:color 0.2s;
+  }
+  .topbar-nav a:hover{color:var(--caramel-deep);}
+  .mobile-menu{
+    display:none;
+    background:transparent;border:none;
+    padding:8px;cursor:pointer;
+    flex-direction:column;gap:4px;
+    width:36px;height:36px;
+    justify-content:center;align-items:center;
+  }
+  .mobile-menu span{
+    width:20px;height:1.5px;background:var(--ink);
+    transition:all 0.3s;
+  }
+  .mobile-menu.open span:nth-child(1){transform:translateY(5.5px) rotate(45deg);}
+  .mobile-menu.open span:nth-child(2){opacity:0;}
+  .mobile-menu.open span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg);}
+
+  /* MOBILE NAV DRAWER */
+  .mobile-drawer{
+    position:fixed;
+    top:0;right:-100%;
+    width:80%;max-width:320px;
+    height:100vh;
+    background:var(--bone);
+    border-left:1px solid var(--line);
+    z-index:200;
+    padding:80px 24px 24px;
+    transition:right 0.3s cubic-bezier(.2,.8,.2,1);
+    display:flex;flex-direction:column;
+    overflow-y:auto;
+  }
+  .mobile-drawer.open{right:0;}
+  .mobile-drawer a{
+    display:block;
+    padding:14px 0;
+    font-size:18px;
+    font-family:'Fraunces',serif;
+    color:var(--ink);
+    text-decoration:none;
+    border-bottom:1px solid var(--line);
+  }
+  .mobile-drawer .meta{
+    margin-top:auto;
+    padding-top:24px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.08em;
+  }
+  .drawer-backdrop{
+    position:fixed;inset:0;
+    background:rgba(43,24,16,0.5);
+    z-index:150;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.3s;
+  }
+  .drawer-backdrop.open{opacity:1;pointer-events:auto;}
+
+  /* LOGIN MODAL */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background:rgba(43,24,16,0.6);
+    backdrop-filter:blur(4px);
+    z-index:300;
+    display:none;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--bone);
+    border-radius:24px;
+    width:100%;max-width:420px;
+    padding:36px;
+    position:relative;
+    border:1px solid var(--line-strong);
+    box-shadow:0 24px 60px -12px rgba(43,24,16,0.3);
+    animation:modalIn 0.3s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(20px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .modal-close{
+    position:absolute;top:16px;right:16px;
+    width:32px;height:32px;
+    background:transparent;border:none;
+    color:var(--ink-dim);
+    cursor:pointer;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.2s;
+  }
+  .modal-close:hover{background:var(--bone-2);color:var(--ink);}
+  .modal-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--caramel-deep);
+    margin-bottom:8px;
+  }
+  .modal h3{
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:32px;
+    letter-spacing:-0.02em;
+    margin-bottom:8px;
+    line-height:1.05;
+  }
+  .modal h3 .italic{font-style:italic;color:var(--brick);font-weight:400;}
+  .modal p.lead{
+    color:var(--ink-dim);
+    font-size:14px;
+    margin-bottom:24px;
+    line-height:1.5;
+  }
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    display:block;margin-bottom:6px;
+  }
+  .modal-field input{
+    width:100%;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:13px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    transition:border-color 0.2s;
+  }
+  .modal-field input:focus{
+    outline:none;border-color:var(--caramel);
+  }
+  .modal-submit{
+    width:100%;
+    padding:14px;
+    background:var(--ink);
+    color:var(--bone);
+    border:none;
+    border-radius:10px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;font-weight:500;
+    cursor:pointer;
+    margin-top:6px;
+    transition:background 0.2s;
+  }
+  .modal-submit:hover{background:var(--brick);}
+  .modal-divider{
+    display:flex;align-items:center;gap:12px;
+    margin:20px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:0.1em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .modal-divider::before,.modal-divider::after{
+    content:'';flex:1;height:1px;background:var(--line);
+  }
+  .modal-social{
+    width:100%;
+    padding:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;color:var(--ink);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    transition:all 0.2s;
+    margin-bottom:8px;
+  }
+  .modal-social:hover{background:var(--bone-2);border-color:var(--line-strong);}
+  .modal-foot{
+    margin-top:18px;
+    text-align:center;
+    font-size:13px;
+    color:var(--ink-dim);
+  }
+  .modal-foot a{color:var(--brick);text-decoration:none;font-weight:500;}
+  .modal-foot a:hover{text-decoration:underline;}
+
+  /* IMAGE LIGHTBOX */
+  .lightbox{
+    position:fixed;inset:0;
+    background:rgba(43,24,16,0.85);
+    backdrop-filter:blur(8px);
+    z-index:400;
+    display:none;align-items:center;justify-content:center;
+    padding:32px;
+  }
+  .lightbox.open{display:flex;}
+  .lightbox-content{
+    background:var(--bone);
+    border-radius:24px;
+    width:100%;max-width:680px;
+    padding:32px;
+    position:relative;
+    animation:modalIn 0.3s cubic-bezier(.2,.8,.2,1);
+  }
+  .lightbox-img{
+    width:100%;
+    aspect-ratio:1;
+    border-radius:16px;
+    background:var(--bone-2);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .lightbox-img svg{width:90%;height:90%;}
+  .lightbox-info .brand{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--caramel-deep);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .lightbox-info h3{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:24px;
+    line-height:1.2;
+    margin-bottom:8px;
+    letter-spacing:-0.005em;
+  }
+  .lightbox-info .meta{
+    font-size:14px;color:var(--ink-dim);
+    display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .lightbox-info .meta .dot{color:var(--ink-faint);}
+  .product-img{cursor:zoom-in;position:relative;}
+  .product-img .zoom-hint{
+    position:absolute;top:8px;right:8px;
+    width:28px;height:28px;
+    background:rgba(255,255,255,0.9);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;
+    transition:opacity 0.2s;
+    color:var(--ink);
+    pointer-events:none;
+  }
+  .product-summary:hover .product-img .zoom-hint{opacity:1;}
+  .product-img .zoom-hint svg{width:14px;height:14px;}
+
+  /* LOADING BAR */
+  .loading-bar{
+    display:none;
+    width:100%;
+    height:3px;
+    background:var(--bone-2);
+    border-radius:0;
+    overflow:hidden;
+    position:relative;
+    margin-bottom:0;
+  }
+  .loading-bar.active{display:block;}
+  .loading-bar-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--caramel),var(--brick),var(--caramel));
+    background-size:200% 100%;
+    width:0%;
+    transition:width 0.3s ease-out;
+    animation:loadingShimmer 1.5s linear infinite;
+  }
+  @keyframes loadingShimmer{
+    from{background-position:0% 50%;}
+    to{background-position:200% 50%;}
+  }
+  .loading-status{
+    display:none;
+    padding:10px 24px;
+    background:#FFF7ED;
+    border:1px solid var(--line);
+    border-bottom:none;
+    border-radius:16px 16px 0 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    align-items:center;
+    gap:12px;
+  }
+  .loading-status.active{display:flex;}
+  .loading-status .spinner{
+    width:12px;height:12px;
+    border:1.5px solid var(--bone-3);
+    border-top-color:var(--caramel-deep);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-status .pct{
+    margin-left:auto;
+    color:var(--ink);
+    font-weight:500;
+  }
+
+  /* HERO + SEARCH */
+  .hero{
+    padding:64px 32px 40px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero-inner{
+    max-width:1400px;margin:0 auto;
+    position:relative;z-index:2;
+  }
+  .hero-decor{
+    position:absolute;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.5;
+  }
+  .hero-decor.right{
+    top:-40px;right:-80px;
+    width:380px;height:380px;
+    background:radial-gradient(circle,rgba(199,149,109,0.18),transparent 60%);
+  }
+  .hero-decor.left{
+    bottom:-100px;left:-60px;
+    width:280px;height:280px;
+    background:radial-gradient(circle,rgba(184,92,87,0.12),transparent 60%);
+  }
+
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    margin-bottom:24px;
+  }
+  .hero-eyebrow::before{
+    content:'';
+    width:24px;height:1px;
+    background:var(--caramel);
+  }
+
+  .hero h1{
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:clamp(44px,6.5vw,86px);
+    line-height:0.96;
+    letter-spacing:-0.025em;
+    margin-bottom:20px;
+    max-width:1100px;
+    font-variation-settings:"SOFT" 50,"opsz" 144;
+  }
+  .hero h1 .italic{
+    font-style:italic;
+    color:var(--brick);
+    font-weight:400;
+  }
+  .hero-sub{
+    font-size:17px;
+    color:var(--ink-dim);
+    max-width:620px;
+    margin-bottom:40px;
+    line-height:1.6;
+  }
+
+  /* SEARCH BAR — the hero element */
+  .search-card{
+    background:#fff;
+    border:1px solid var(--line-strong);
+    border-radius:24px;
+    padding:32px;
+    box-shadow:0 1px 0 rgba(43,24,16,0.04),0 12px 40px -16px rgba(43,24,16,0.12);
+    max-width:1100px;
+  }
+  .search-tabs{
+    display:flex;gap:4px;
+    margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .search-tab{
+    padding:10px 18px;
+    background:transparent;
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-dim);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    transition:all 0.2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .search-tab svg{width:14px;height:14px;}
+  .search-tab.active{
+    color:var(--ink);
+    border-bottom-color:var(--brick);
+  }
+  .search-tab:hover:not(.active){color:var(--ink);}
+
+  .search-row{
+    display:grid;
+    grid-template-columns:2.5fr 1fr 1fr auto;
+    gap:12px;
+    align-items:end;
+  }
+  .search-field{
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .search-field label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ink-dim);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-weight:500;
+  }
+  .search-input,.search-select{
+    background:var(--bone);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    width:100%;
+    transition:all 0.2s;
+    font-weight:400;
+  }
+  .search-input:focus,.search-select:focus{
+    outline:none;
+    border-color:var(--caramel);
+    background:#fff;
+  }
+  .search-input::placeholder{color:var(--ink-faint);}
+  .search-select{
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%236B5A47' d='M3 4.5L6 7.5L9 4.5'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:36px;
+    cursor:pointer;
+  }
+  .search-btn{
+    padding:14px 28px;
+    background:var(--ink);
+    color:var(--bone);
+    border:none;
+    border-radius:12px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    transition:all 0.2s;
+    display:inline-flex;align-items:center;gap:10px;
+    height:48px;
+    white-space:nowrap;
+  }
+  .search-btn:hover{
+    background:var(--brick);
+  }
+  .search-btn svg{width:14px;height:14px;}
+
+  .search-quick{
+    margin-top:20px;
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+  }
+  .search-quick-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    margin-right:4px;
+  }
+  .quick-chip{
+    padding:6px 14px;
+    background:var(--bone);
+    border:1px solid var(--line);
+    border-radius:999px;
+    font-size:13px;
+    color:var(--ink);
+    cursor:pointer;
+    transition:all 0.2s;
+    text-decoration:none;
+    font-weight:400;
+  }
+  .quick-chip:hover{
+    border-color:var(--caramel);
+    background:#fff;
+  }
+
+  /* TICKER */
+  .ticker{
+    background:var(--cocoa);
+    color:var(--bone);
+    overflow:hidden;
+    border-bottom:1px solid var(--cocoa);
+    padding:12px 0;
+  }
+  .ticker-track{
+    display:flex;gap:48px;
+    white-space:nowrap;
+    animation:ticker 50s linear infinite;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.05em;
+  }
+  @keyframes ticker{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+  .ticker-item{
+    display:inline-flex;align-items:center;gap:10px;
+    color:var(--bone);
+  }
+  .ticker-item .down{color:#9bbf94;}
+  .ticker-item .up{color:#d49090;}
+  .ticker-item .product{color:var(--bone-2);}
+  .ticker-dot{
+    color:var(--caramel);
+    font-size:8px;
+  }
+
+  /* SECTION FRAME */
+  section{
+    padding:80px 32px;
+    border-bottom:1px solid var(--line);
+  }
+  .section-inner{max-width:1400px;margin:0 auto;}
+
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:48px;
+    gap:32px;
+    flex-wrap:wrap;
+  }
+  .section-head-left{flex:1;min-width:280px;}
+  .section-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--caramel-deep);
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .section-head h2{
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:clamp(32px,4vw,52px);
+    line-height:1.04;
+    letter-spacing:-0.02em;
+    margin-bottom:12px;
+  }
+  .section-head h2 .italic{font-style:italic;color:var(--brick);font-weight:400;}
+  .section-head p{
+    color:var(--ink-dim);
+    font-size:15px;
+    max-width:520px;
+  }
+  .section-head-right{
+    display:flex;gap:8px;align-items:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+  }
+
+  /* RESULTS — main comparison engine */
+  .results-toolbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 24px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px 16px 0 0;
+    border-bottom:none;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .results-count{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+    letter-spacing:0.05em;
+  }
+  .results-count strong{color:var(--ink);font-weight:500;}
+  .results-sort{
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;color:var(--ink-dim);
+  }
+  .results-sort select{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:6px 28px 6px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%236B5A47' d='M3 4.5L6 7.5L9 4.5'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+  }
+
+  /* PRODUCT CARD */
+  .product-card{
+    background:#fff;
+    border:1px solid var(--line);
+    margin-bottom:0;
+    border-bottom:none;
+    transition:background 0.2s;
+  }
+  .product-card:last-of-type{
+    border-bottom:1px solid var(--line);
+    border-radius:0 0 16px 16px;
+  }
+  .product-card:hover{background:#FFFCF8;}
+
+  .product-summary{
+    display:grid;
+    grid-template-columns:96px 1fr 200px 180px;
+    gap:24px;
+    align-items:center;
+    padding:20px 24px;
+    cursor:pointer;
+    transition:background 0.2s;
+  }
+  .product-img{
+    width:96px;height:96px;
+    border-radius:12px;
+    background:var(--bone-2);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    position:relative;
+  }
+  .product-img.bg-caramel{background:linear-gradient(135deg,#F4ECDD,#E8D4B8);}
+  .product-img.bg-brick{background:linear-gradient(135deg,#F4DCD9,#E8B8B3);}
+  .product-img.bg-sage{background:linear-gradient(135deg,#E5EBDD,#C5D1B5);}
+  .product-img.bg-bone{background:linear-gradient(135deg,#FAF6F0,#EBE0CB);}
+  .product-img svg{width:100%;height:100%;}
+
+  .product-info .brand{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--caramel-deep);
+    margin-bottom:4px;
+    font-weight:500;
+  }
+  .product-info h3{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:21px;
+    line-height:1.2;
+    color:var(--ink);
+    margin-bottom:6px;
+    letter-spacing:-0.005em;
+  }
+  .product-info .meta{
+    font-size:13px;
+    color:var(--ink-dim);
+    display:flex;gap:14px;flex-wrap:wrap;
+  }
+  .product-info .meta span{display:inline-flex;align-items:center;gap:4px;}
+  .product-info .meta .dot{color:var(--ink-faint);}
+
+  .product-stores{
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .product-stores .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .stores-row{
+    display:flex;gap:6px;align-items:center;
+  }
+  .store-pip{
+    width:24px;height:24px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .store-pip svg{width:100%;height:100%;}
+  .store-more{
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-left:4px;
+  }
+
+  .product-price-summary{
+    text-align:right;
+  }
+  .product-price-summary .from{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:2px;
+  }
+  .product-price-summary .price{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:30px;
+    color:var(--ink);
+    line-height:1;
+    letter-spacing:-0.02em;
+  }
+  .product-price-summary .save{
+    font-size:12px;
+    color:var(--sage-deep);
+    font-weight:500;
+    margin-top:4px;
+  }
+  .expand-icon{
+    margin-left:8px;
+    color:var(--ink-faint);
+    transition:transform 0.3s;
+    display:inline-block;
+  }
+  .product-card.open .expand-icon{transform:rotate(180deg);}
+
+  /* RETAILER LIST (expanded) */
+  .product-retailers{
+    display:none;
+    padding:0 24px 24px;
+    background:var(--bone);
+    border-top:1px solid var(--line);
+  }
+  .product-card.open .product-retailers{display:block;}
+
+  .retailer-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:16px;
+  }
+  .retailer-table thead th{
+    text-align:left;
+    padding:10px 12px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    font-weight:500;
+    border-bottom:1px solid var(--line);
+  }
+  .retailer-table thead th.right{text-align:right;}
+  .retailer-row{
+    background:#fff;
+    transition:background 0.15s;
+  }
+  .retailer-row:hover{background:#FFFCF8;}
+  .retailer-row td{
+    padding:14px 12px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+    font-size:14px;
+  }
+  .retailer-row.best td{
+    background:#FFF7ED;
+  }
+  .retailer-row.best td:first-child{
+    border-left:3px solid var(--brick);
+    padding-left:9px;
+  }
+
+  .retailer-cell-name{
+    display:flex;align-items:center;gap:12px;
+  }
+  .retailer-logo{
+    width:32px;height:32px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    overflow:hidden;
+  }
+  .retailer-logo svg{width:100%;height:100%;}
+  .retailer-cell-name .name{
+    font-weight:500;
+    font-size:14px;
+    color:var(--ink);
+    line-height:1.2;
+  }
+  .retailer-cell-name .badge{
+    display:inline-block;
+    margin-left:8px;
+    padding:2px 8px;
+    border-radius:999px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    background:var(--brick);
+    color:var(--bone);
+    font-weight:500;
+    vertical-align:1px;
+  }
+  .retailer-cell-name .sub{
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-top:1px;
+  }
+
+  .stock-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    font-weight:500;
+  }
+  .stock-tag::before{
+    content:'';width:6px;height:6px;border-radius:50%;
+  }
+  .stock-tag.in{color:var(--sage-deep);}
+  .stock-tag.in::before{background:var(--sage);}
+  .stock-tag.low{color:#A87A20;}
+  .stock-tag.low::before{background:#C99830;}
+  .stock-tag.out{color:#8E433F;}
+  .stock-tag.out::before{background:var(--brick);}
+
+  .ship-cell{font-size:13px;color:var(--ink-dim);}
+
+  .perks{
+    display:flex;gap:4px;flex-wrap:wrap;
+  }
+  .perk{
+    padding:2px 8px;
+    border-radius:4px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    background:var(--bone-2);
+    color:var(--cocoa-soft);
+    font-weight:500;
+    letter-spacing:0.02em;
+  }
+  .perk.code{background:var(--bone-3);color:var(--caramel-deep);}
+
+  .price-cell{
+    text-align:right;
+    font-family:'Fraunces',serif;
+    font-size:18px;
+    color:var(--ink);
+    font-weight:400;
+  }
+  .price-cell .old{
+    text-decoration:line-through;
+    color:var(--ink-faint);
+    font-size:12px;
+    margin-right:6px;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+  }
+  .go-cell{text-align:right;}
+  .go-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 16px;
+    background:transparent;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    border-radius:8px;
+    font-size:12px;
+    font-weight:500;
+    text-decoration:none;
+    transition:all 0.2s;
+  }
+  .go-btn:hover{
+    background:var(--ink);color:var(--bone);
+  }
+  .retailer-row.best .go-btn{
+    background:var(--ink);color:var(--bone);
+  }
+  .retailer-row.best .go-btn:hover{
+    background:var(--brick);border-color:var(--brick);
+  }
+
+  /* TRENDING SECTION */
+  .trending-section{
+    background:var(--bone-2);
+  }
+  .trending-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+  }
+  .trending-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:all 0.3s;
+  }
+  .trending-card:hover{
+    border-color:var(--caramel);
+    transform:translateY(-2px);
+  }
+  .trending-card .thumb{
+    aspect-ratio:1;
+    width:100%;
+    position:relative;
+  }
+  .trending-card .thumb svg{width:100%;height:100%;}
+  .trending-card .body{padding:16px 18px;}
+  .trending-card .cat{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--caramel-deep);
+    margin-bottom:6px;
+  }
+  .trending-card h4{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:18px;
+    line-height:1.2;
+    margin-bottom:8px;
+    letter-spacing:-0.005em;
+  }
+  .trending-card .stats{
+    display:flex;justify-content:space-between;
+    font-size:12px;
+    color:var(--ink-dim);
+    padding-top:8px;
+    border-top:1px solid var(--line);
+  }
+  .trending-card .stats .save{color:var(--sage-deep);font-weight:500;}
+
+  /* DROPS / WEEKLY */
+  .drops-list{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:0;
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .drop-item{
+    display:grid;
+    grid-template-columns:48px 1fr auto;
+    gap:16px;
+    padding:18px 22px;
+    align-items:center;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    transition:background 0.2s;
+    cursor:pointer;
+  }
+  .drop-item:nth-child(even){border-right:none;}
+  .drop-item:nth-last-child(-n+2){border-bottom:none;}
+  .drop-item:hover{background:#FFFCF8;}
+  .drop-rank{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:24px;
+    color:var(--caramel);
+    font-weight:300;
+    line-height:1;
+  }
+  .drop-info .brand{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .drop-info .name{
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    color:var(--ink);
+    line-height:1.2;
+    margin:2px 0 4px;
+  }
+  .drop-info .at{
+    font-size:12px;
+    color:var(--ink-dim);
+  }
+  .drop-info .at strong{color:var(--ink);font-weight:500;}
+  .drop-price{text-align:right;}
+  .drop-price .now{
+    font-family:'Fraunces',serif;
+    font-size:18px;
+    color:var(--brick);
+    line-height:1;
+    font-weight:400;
+  }
+  .drop-price .was{
+    font-size:11px;
+    color:var(--ink-faint);
+    text-decoration:line-through;
+    margin-top:3px;
+  }
+  .drop-price .save{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--sage-deep);
+    margin-top:4px;
+    letter-spacing:0.05em;
+    font-weight:500;
+  }
+
+  /* ALERTS / NEWSLETTER */
+  .alerts-section{
+    background:var(--cocoa);
+    color:var(--bone);
+    border-bottom:none;
+  }
+  .alerts-grid{
+    display:grid;
+    grid-template-columns:1.2fr 1fr;
+    gap:64px;
+    align-items:center;
+    max-width:1400px;
+    margin:0 auto;
+  }
+  .alerts-section .section-eyebrow{color:var(--caramel);}
+  .alerts-section h2{
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:clamp(36px,4.5vw,60px);
+    line-height:1.02;
+    letter-spacing:-0.02em;
+    margin-bottom:20px;
+    color:var(--bone);
+  }
+  .alerts-section h2 .italic{font-style:italic;color:var(--caramel);font-weight:400;}
+  .alerts-section .lead{
+    font-size:16px;
+    color:var(--bone-2);
+    max-width:480px;
+    margin-bottom:32px;
+    line-height:1.65;
+    opacity:0.85;
+  }
+  .alerts-form{
+    background:rgba(250,246,240,0.05);
+    border:1px solid rgba(250,246,240,0.15);
+    border-radius:14px;
+    padding:6px;
+    display:flex;align-items:center;
+    max-width:480px;
+  }
+  .alerts-form input{
+    flex:1;
+    background:transparent;border:none;outline:none;
+    color:var(--bone);
+    padding:14px 18px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+  .alerts-form input::placeholder{color:rgba(250,246,240,0.45);}
+  .alerts-form button{
+    padding:12px 22px;
+    background:var(--caramel);
+    color:var(--cocoa);
+    border:none;
+    border-radius:10px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    transition:background 0.2s;
+    white-space:nowrap;
+  }
+  .alerts-form button:hover{background:var(--bone);}
+  .alerts-meta{
+    margin-top:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:rgba(250,246,240,0.5);
+  }
+  .alerts-features{
+    display:flex;flex-direction:column;gap:24px;
+  }
+  .alerts-feature{
+    display:grid;
+    grid-template-columns:32px 1fr;
+    gap:20px;
+    align-items:flex-start;
+    padding-bottom:24px;
+    border-bottom:1px solid rgba(250,246,240,0.12);
+  }
+  .alerts-feature:last-child{border-bottom:none;padding-bottom:0;}
+  .alerts-feature .num{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:18px;
+    color:var(--caramel);
+    font-weight:300;
+    line-height:1.4;
+  }
+  .alerts-feature h4{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:18px;
+    color:var(--bone);
+    margin-bottom:6px;
+    letter-spacing:-0.005em;
+  }
+  .alerts-feature p{
+    font-size:13px;
+    color:var(--bone-2);
+    opacity:0.7;
+    line-height:1.6;
+  }
+
+  /* FOOTER */
+  footer{
+    background:var(--bone);
+    padding:48px 32px 24px;
+  }
+  .footer-grid{
+    max-width:1400px;margin:0 auto;
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr;
+    gap:48px;
+    margin-bottom:40px;
+  }
+  .footer-brand p{
+    margin-top:16px;
+    color:var(--ink-dim);
+    font-size:13px;
+    max-width:320px;
+    line-height:1.6;
+  }
+  .footer-col h5{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:14px;
+    font-weight:500;
+  }
+  .footer-col a{
+    display:block;
+    color:var(--ink);
+    text-decoration:none;
+    font-size:13px;
+    margin-bottom:10px;
+    transition:color 0.2s;
+  }
+  .footer-col a:hover{color:var(--caramel-deep);}
+  .footer-bottom{
+    max-width:1400px;margin:0 auto;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    letter-spacing:0.05em;
+  }
+
+  /* Reveal */
+  .reveal{
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 0.7s cubic-bezier(.2,.8,.2,1),transform 0.7s cubic-bezier(.2,.8,.2,1);
+  }
+  .reveal.visible{opacity:1;transform:translateY(0);}
+
+  /* Responsive */
+  @media (max-width:1024px){
+    .topbar-inner{grid-template-columns:auto 1fr auto auto;gap:16px;}
+    .topbar-nav{display:none;}
+    .mobile-menu{display:flex;order:1;}
+    .topbar-right{order:2;}
+    .search-row{grid-template-columns:1fr 1fr;}
+    .search-row > *:first-child{grid-column:1/-1;}
+    .search-btn{grid-column:1/-1;}
+    .product-summary{grid-template-columns:80px 1fr 140px;gap:16px;}
+    .product-stores{display:none;}
+    .trending-grid{grid-template-columns:repeat(2,1fr);}
+    .drops-list{grid-template-columns:1fr;}
+    .drop-item{border-right:none !important;}
+    .alerts-grid{grid-template-columns:1fr;gap:40px;}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
+    .retailer-table thead th:nth-child(3),
+    .retailer-table thead th:nth-child(4),
+    .retailer-row td:nth-child(3),
+    .retailer-row td:nth-child(4){display:none;}
+  }
+  @media (max-width:768px){
+    .topbar-inner{padding:12px 16px;gap:12px;}
+    .login-btn span{display:none;}
+    .login-btn{padding:9px;width:36px;height:36px;justify-content:center;}
+    .login-btn svg{width:16px;height:16px;}
+    .logo{font-size:24px;}
+
+    .hero{padding:32px 16px 28px;}
+    .hero h1{font-size:36px;line-height:1.04;margin-bottom:14px;}
+    .hero-sub{font-size:15px;margin-bottom:24px;}
+    .hero-eyebrow{font-size:10px;margin-bottom:16px;}
+
+    section{padding:40px 16px;}
+
+    .search-card{padding:16px;border-radius:18px;}
+    .search-tabs{
+      gap:0;
+      overflow-x:auto;
+      flex-wrap:nowrap;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .search-tabs::-webkit-scrollbar{display:none;}
+    .search-tab{padding:10px 12px;font-size:12px;flex-shrink:0;}
+    .search-tab svg{width:12px;height:12px;}
+    .search-row{grid-template-columns:1fr;gap:10px;}
+    .search-input,.search-select{padding:13px 14px;font-size:15px;}
+    .search-btn{height:48px;width:100%;justify-content:center;}
+    .search-quick{gap:6px;}
+    .quick-chip{font-size:12px;padding:6px 12px;}
+
+    .ticker-track{font-size:11px;gap:32px;}
+
+    .section-head{margin-bottom:28px;}
+    .section-head h2{font-size:30px;}
+    .section-head p{font-size:14px;}
+    .section-head-right{display:none;}
+
+    .results-toolbar{padding:14px 16px;flex-direction:column;align-items:flex-start;gap:10px;}
+    .results-count{font-size:11px;}
+
+    /* Mobile product summary — touch-friendly stack */
+    .product-summary{
+      grid-template-columns:72px 1fr;
+      gap:14px;
+      padding:14px 16px;
+      align-items:flex-start;
+    }
+    .product-img{width:72px;height:72px;}
+    .product-info h3{font-size:16px;margin-bottom:4px;}
+    .product-info .brand{font-size:9px;}
+    .product-info .meta{font-size:12px;gap:10px;}
+    .product-stores{display:none;}
+    .product-price-summary{
+      grid-column:1/-1;
+      text-align:left;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      border-top:1px solid var(--line);
+      padding-top:12px;
+      margin-top:4px;
+    }
+    .product-price-summary .from{display:none;}
+    .product-price-summary .price{font-size:24px;}
+    .product-price-summary .save{margin-top:0;font-size:11px;}
+    .expand-icon{margin-left:6px;font-size:12px;}
+
+    /* Retailer table → cards on mobile */
+    .product-retailers{padding:12px;}
+    .retailer-table{display:block;}
+    .retailer-table thead{display:none;}
+    .retailer-table tbody{display:block;}
+    .retailer-table tbody tr{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px 12px;
+      padding:14px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      margin-bottom:10px;
+    }
+    .retailer-row.best{
+      background:#FFF7ED;
+      border-color:var(--brick);
+    }
+    .retailer-row.best td:first-child{
+      border-left:none;
+      padding-left:0;
+    }
+    .retailer-table tbody tr td{
+      padding:0;
+      border:none;
+      display:block;
+    }
+    .retailer-table tbody tr td:nth-child(1){
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .retailer-table tbody tr td:nth-child(2){
+      grid-column:1;
+      display:block !important;
+    }
+    .retailer-table tbody tr td:nth-child(3){
+      grid-column:2;
+      display:block !important;
+      text-align:right;
+      font-size:12px;
+    }
+    .retailer-table tbody tr td:nth-child(4){
+      grid-column:1/-1;
+      display:block !important;
+      padding-top:4px;
+    }
+    .retailer-table tbody tr td:nth-child(5){
+      grid-column:1;
+      align-self:center;
+      font-size:20px;
+    }
+    .retailer-table tbody tr td:nth-child(6){
+      grid-column:2;
+      align-self:center;
+    }
+    .go-btn{padding:9px 14px;font-size:11px;}
+    .retailer-cell-name .sub{display:block;font-size:10px;}
+
+    .trending-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+    .trending-card{border-radius:12px;}
+    .trending-card .body{padding:12px;}
+    .trending-card h4{font-size:15px;margin-bottom:6px;}
+    .trending-card .cat{font-size:9px;}
+    .trending-card .stats{font-size:11px;padding-top:6px;}
+
+    .drops-list{border-radius:14px;}
+    .drop-item{
+      grid-template-columns:32px 1fr auto;
+      gap:12px;
+      padding:14px 16px;
+    }
+    .drop-rank{font-size:18px;}
+    .drop-info .name{font-size:14px;}
+    .drop-info .at{font-size:11px;}
+    .drop-info .brand{font-size:9px;}
+    .drop-price .now{font-size:16px;}
+
+    .alerts-section{padding:48px 20px;}
+    .alerts-grid{gap:32px;}
+    .alerts-section h2{font-size:32px;}
+    .alerts-section .lead{font-size:14px;margin-bottom:20px;}
+    .alerts-form{flex-direction:column;align-items:stretch;padding:8px;}
+    .alerts-form input{text-align:center;padding:12px;}
+    .alerts-form button{margin-top:6px;width:100%;padding:14px;}
+    .alerts-features{gap:18px;}
+    .alerts-feature{padding-bottom:18px;grid-template-columns:24px 1fr;gap:14px;}
+    .alerts-feature h4{font-size:16px;}
+    .alerts-feature p{font-size:12px;}
+
+    footer{padding:32px 16px 20px;}
+    .footer-grid{grid-template-columns:1fr;gap:28px;margin-bottom:28px;}
+    .footer-bottom{flex-direction:column;gap:8px;text-align:center;font-size:10px;}
+
+    /* Lightbox mobile */
+    .lightbox{padding:16px;}
+    .lightbox-content{padding:20px;border-radius:16px;}
+    .lightbox-info h3{font-size:20px;}
+
+    /* Modal mobile */
+    .modal{padding:28px 22px;border-radius:20px;}
+    .modal h3{font-size:26px;}
+  }
+  @media (max-width:380px){
+    .hero h1{font-size:30px;}
+    .section-head h2{font-size:26px;}
+    .alerts-section h2{font-size:26px;}
+    .quick-chip{font-size:11px;padding:5px 10px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="#" class="logo">Saiko</a>
+    <nav class="topbar-nav">
+      <a href="#compare">Compare</a>
+      <a href="#trending">Trending</a>
+      <a href="#drops">Drops</a>
+      <a href="#alerts">Get alerts</a>
+    </nav>
+    <button class="mobile-menu" id="mobileMenu" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-right">
+      <button class="login-btn" id="loginBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Log in</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO + SEARCH -->
+<section class="hero">
+  <div class="hero-decor right"></div>
+  <div class="hero-decor left"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">The beauty price index · India</div>
+    <h1>Every shade. Every retailer.<br/><span class="italic">One honest price.</span></h1>
+    <p class="hero-sub">Compare live prices across Nykaa, Tira, Sephora India, Cult Beauty and 240+ more — including shipping, taxes, and active codes.</p>
+
+    <!-- THE TOOL — search-first -->
+    <div class="search-card">
+      <div class="search-tabs">
+        <button class="search-tab active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          Search product
+        </button>
+        <button class="search-tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H1v3h8v3l3-3.5L9 10v1z"/><path d="M22 12h-7"/><path d="M15 4l7 8-7 8"/></svg>
+          Paste a link
+        </button>
+        <button class="search-tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+          Browse by category
+        </button>
+      </div>
+      <div class="search-row">
+        <div class="search-field">
+          <label>Product, brand or shade</label>
+          <input class="search-input" type="text" placeholder="e.g. Charlotte Tilbury Pillow Talk, La Mer Crème, vitamin C serum" />
+        </div>
+        <div class="search-field">
+          <label>Category</label>
+          <select class="search-select">
+            <option>All categories</option>
+            <option>Skincare</option>
+            <option>Makeup</option>
+            <option>Fragrance</option>
+            <option>Haircare</option>
+            <option>Body</option>
+            <option>Tools</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label>Max budget</label>
+          <select class="search-select">
+            <option>Any price</option>
+            <option>Under ₹1,000</option>
+            <option>Under ₹2,500</option>
+            <option>Under ₹5,000</option>
+            <option>Under ₹10,000</option>
+          </select>
+        </div>
+        <button class="search-btn" id="searchBtn" type="button">
+          Find best price
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div class="search-quick">
+        <span class="search-quick-label">Trending →</span>
+        <a href="#" class="quick-chip">Rare Beauty Soft Pinch</a>
+        <a href="#" class="quick-chip">Drunk Elephant C-Firma</a>
+        <a href="#" class="quick-chip">La Roche-Posay SPF</a>
+        <a href="#" class="quick-chip">Olaplex No.3</a>
+        <a href="#" class="quick-chip">Sol de Janeiro 62</a>
+        <a href="#" class="quick-chip">Dior Lip Glow</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE PRICE TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="product">Charlotte Tilbury Pillow Talk</span> <span class="down">↓ 34%</span> <span>₹2,640 at Tira</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Sol de Janeiro Bum Bum 240ml</span> <span class="down">↓ 32%</span> <span>₹3,200 at Cult Beauty</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">La Mer Crème de la Mer 30ml</span> <span class="down">↓ 18%</span> <span>₹19,200 at Sephora IN</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Olaplex No.3 100ml</span> <span class="down">↓ 31%</span> <span>₹1,920 at Cult Beauty</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Drunk Elephant C-Firma</span> <span class="down">↓ 22%</span> <span>₹6,400 at Tira</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Dior Lip Glow Oil</span> <span class="up">↑ 8%</span> <span>₹3,890 at Sephora IN</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Rare Beauty Soft Pinch Joy</span> <span class="down">↓ 32%</span> <span>₹1,690 at Nykaa</span></span>
+    <span class="ticker-dot">✦</span>
+    <!-- duplicate -->
+    <span class="ticker-item"><span class="product">Charlotte Tilbury Pillow Talk</span> <span class="down">↓ 34%</span> <span>₹2,640 at Tira</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Sol de Janeiro Bum Bum 240ml</span> <span class="down">↓ 32%</span> <span>₹3,200 at Cult Beauty</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">La Mer Crème de la Mer 30ml</span> <span class="down">↓ 18%</span> <span>₹19,200 at Sephora IN</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Olaplex No.3 100ml</span> <span class="down">↓ 31%</span> <span>₹1,920 at Cult Beauty</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Drunk Elephant C-Firma</span> <span class="down">↓ 22%</span> <span>₹6,400 at Tira</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Dior Lip Glow Oil</span> <span class="up">↑ 8%</span> <span>₹3,890 at Sephora IN</span></span>
+    <span class="ticker-dot">✦</span>
+    <span class="ticker-item"><span class="product">Rare Beauty Soft Pinch Joy</span> <span class="down">↓ 32%</span> <span>₹1,690 at Nykaa</span></span>
+    <span class="ticker-dot">✦</span>
+  </div>
+</div>
+
+<!-- COMPARE — RESULTS -->
+<section id="compare">
+  <div class="section-inner">
+    <div class="section-head reveal">
+      <div class="section-head-left">
+        <div class="section-eyebrow">↻ Sample comparison · Pillow Talk Lipstick</div>
+        <h2>Same product. <span class="italic">Wildly</span> different prices.</h2>
+        <p>Live results across India's main beauty retailers. Click any product to expand and see every retailer side-by-side, with shipping and codes already factored in.</p>
+      </div>
+      <div class="section-head-right">
+        <span>Last refresh · 02 May 2026 · 14:48 IST</span>
+      </div>
+    </div>
+
+    <div class="loading-status" id="loadingStatus">
+      <div class="spinner"></div>
+      <span id="loadingText">Fetching live prices from 240 retailers</span>
+      <span class="pct" id="loadingPct">0%</span>
+    </div>
+    <div class="loading-bar" id="loadingBar">
+      <div class="loading-bar-fill" id="loadingBarFill"></div>
+    </div>
+
+    <div class="results-toolbar">
+      <div class="results-count"><strong>4 products</strong> · 20 retailers tracked · prices include shipping &amp; codes</div>
+      <div class="results-sort">
+        <span>Sort by</span>
+        <select>
+          <option>Biggest savings</option>
+          <option>Lowest price</option>
+          <option>Most popular</option>
+          <option>Recently dropped</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- PRODUCT 1: Pillow Talk -->
+    <div class="product-card open">
+      <div class="product-summary">
+        <div class="product-img bg-brick">
+          <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ct-tube" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stop-color="#A87850"/>
+                <stop offset="0.4" stop-color="#E8D4B8"/>
+                <stop offset="0.5" stop-color="#FAF6F0"/>
+                <stop offset="0.6" stop-color="#E8D4B8"/>
+                <stop offset="1" stop-color="#8E5F3D"/>
+              </linearGradient>
+              <linearGradient id="ct-bullet" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#D4A09C"/>
+                <stop offset="1" stop-color="#A85C57"/>
+              </linearGradient>
+            </defs>
+            <rect x="34" y="42" width="28" height="42" rx="1.5" fill="url(#ct-tube)" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="34" y="56" width="28" height="2" fill="#2B1810" opacity="0.3"/>
+            <path d="M37 42 L37 22 Q37 16 48 14 Q59 16 59 22 L59 42 Z" fill="url(#ct-bullet)" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="38" y="63" width="20" height="16" fill="#FAF6F0" opacity="0.85"/>
+            <text x="48" y="71" font-family="serif" font-size="3.5" font-style="italic" fill="#2B1810" text-anchor="middle">Charlotte Tilbury</text>
+            <text x="48" y="76" font-family="sans-serif" font-size="2.2" font-weight="700" fill="#2B1810" text-anchor="middle" letter-spacing="0.3">PILLOW TALK</text>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="brand">Charlotte Tilbury</div>
+          <h3>Matte Revolution Lipstick — Pillow Talk</h3>
+          <div class="meta">
+            <span>3.5g</span>
+            <span class="dot">·</span>
+            <span>Lipstick</span>
+            <span class="dot">·</span>
+            <span>Refillable case option</span>
+          </div>
+        </div>
+        <div class="product-stores">
+          <span class="label">5 retailers</span>
+          <div class="stores-row">
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="15" font-family="sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">TIRA</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FC2779"/><text x="12" y="16" font-family="sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="9" font-family="sans-serif" font-size="3.5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.2">SEPHORA</text><line x1="4" y1="12" x2="20" y2="12" stroke="#fff" stroke-width="0.4"/><text x="12" y="18" font-family="serif" font-size="4.5" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#F4DCD9"/><text x="12" y="11" font-family="serif" font-size="3.5" font-style="italic" fill="#2B1810" text-anchor="middle">Charlotte</text><text x="12" y="17" font-family="serif" font-size="3.5" font-style="italic" fill="#2B1810" text-anchor="middle">Tilbury</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#1a1a1a"/><text x="12" y="11" font-family="sans-serif" font-size="3.5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.2">CULT</text><text x="12" y="18" font-family="serif" font-size="4" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div>
+          </div>
+        </div>
+        <div class="product-price-summary">
+          <div class="from">From</div>
+          <div class="price">₹2,640<span class="expand-icon">▾</span></div>
+          <div class="save">↓ Save ₹1,360 vs highest</div>
+        </div>
+      </div>
+      <div class="product-retailers">
+        <table class="retailer-table">
+          <thead>
+            <tr>
+              <th>Retailer</th>
+              <th>Stock</th>
+              <th>Shipping</th>
+              <th>Perks</th>
+              <th class="right">Price</th>
+              <th class="right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="retailer-row best">
+              <td>
+                <div class="retailer-cell-name">
+                  <div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="20" font-family="sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.5">TIRA</text></svg></div>
+                  <div>
+                    <div class="name">Tira <span class="badge">Best</span></div>
+                    <div class="sub">tirabeauty.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 2-3 days</td>
+              <td><div class="perks"><span class="perk code">TIRA20</span><span class="perk">Free sample</span></div></td>
+              <td class="price-cell">₹2,640</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td>
+                <div class="retailer-cell-name">
+                  <div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FC2779"/><text x="16" y="22" font-family="sans-serif" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div>
+                  <div>
+                    <div class="name">Nykaa</div>
+                    <div class="sub">nykaa.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">₹49 · 3-5 days</td>
+              <td><div class="perks"><span class="perk">Loyalty 5%</span></div></td>
+              <td class="price-cell"><span class="old">₹3,200</span>₹2,880</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td>
+                <div class="retailer-cell-name">
+                  <div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="12" font-family="sans-serif" font-size="5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.3">SEPHORA</text><line x1="6" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="0.6"/><text x="16" y="25" font-family="serif" font-size="6" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div>
+                  <div>
+                    <div class="name">Sephora India</div>
+                    <div class="sub">sephora.nnnow.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="stock-tag low">Low stock</span></td>
+              <td class="ship-cell">Free over ₹2k</td>
+              <td><div class="perks"><span class="perk">Insider 10%</span></div></td>
+              <td class="price-cell">₹3,200</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td>
+                <div class="retailer-cell-name">
+                  <div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#F4DCD9"/><text x="16" y="14" font-family="serif" font-size="5" font-style="italic" fill="#2B1810" text-anchor="middle">Charlotte</text><text x="16" y="23" font-family="serif" font-size="5" font-style="italic" fill="#2B1810" text-anchor="middle">Tilbury</text></svg></div>
+                  <div>
+                    <div class="name">Charlotte Tilbury</div>
+                    <div class="sub">charlottetilbury.com/in</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 4-6 days</td>
+              <td><div class="perks"><span class="perk">Refill option</span><span class="perk">2 samples</span></div></td>
+              <td class="price-cell">₹3,400</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td>
+                <div class="retailer-cell-name">
+                  <div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#1a1a1a"/><text x="16" y="14" font-family="sans-serif" font-size="5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">CULT</text><text x="16" y="24" font-family="serif" font-size="5.5" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div>
+                  <div>
+                    <div class="name">Cult Beauty (intl)</div>
+                    <div class="sub">cultbeauty.com</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">+₹890 import</td>
+              <td><div class="perks"><span class="perk code">FIRST15</span></div></td>
+              <td class="price-cell">₹4,000</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCT 2: La Roche-Posay -->
+    <div class="product-card">
+      <div class="product-summary">
+        <div class="product-img bg-bone">
+          <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="lrp" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0" stop-color="#A87850"/>
+                <stop offset="0.5" stop-color="#FAF6F0"/>
+                <stop offset="1" stop-color="#A87850"/>
+              </linearGradient>
+            </defs>
+            <rect x="32" y="22" width="32" height="56" rx="3" fill="url(#lrp)" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="38" y="14" width="20" height="10" rx="1.5" fill="#2B1810"/>
+            <rect x="36" y="34" width="24" height="32" fill="#fff" opacity="0.95" stroke="#2B1810" stroke-width="0.4"/>
+            <text x="48" y="44" font-family="sans-serif" font-size="3.5" font-weight="700" fill="#1A4A8F" text-anchor="middle">LA ROCHE</text>
+            <text x="48" y="49" font-family="sans-serif" font-size="3.5" font-weight="700" fill="#1A4A8F" text-anchor="middle">POSAY</text>
+            <line x1="40" y1="51" x2="56" y2="51" stroke="#2B1810" stroke-width="0.3"/>
+            <text x="48" y="57" font-family="sans-serif" font-size="3" font-weight="600" fill="#2B1810" text-anchor="middle">ANTHELIOS</text>
+            <text x="48" y="62" font-family="sans-serif" font-size="4" font-weight="900" fill="#C7956D" text-anchor="middle">SPF 50+</text>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="brand">La Roche-Posay</div>
+          <h3>Anthelios UVMune 400 SPF50+ Fluid</h3>
+          <div class="meta">
+            <span>50ml</span>
+            <span class="dot">·</span>
+            <span>Sunscreen</span>
+            <span class="dot">·</span>
+            <span>Fragrance-free</span>
+          </div>
+        </div>
+        <div class="product-stores">
+          <span class="label">5 retailers</span>
+          <div class="stores-row">
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FF1493"/><text x="12" y="16" font-family="sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">LF</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FC2779"/><text x="12" y="16" font-family="sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="15" font-family="sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">TIRA</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#1A4A8F"/><text x="12" y="15" font-family="sans-serif" font-size="6" font-weight="700" fill="#fff" text-anchor="middle">APOLLO</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#fff"/><text x="12" y="11" font-family="sans-serif" font-size="3" font-weight="700" fill="#1A4A8F" text-anchor="middle">LA ROCHE</text><text x="12" y="17" font-family="sans-serif" font-size="3" font-weight="700" fill="#1A4A8F" text-anchor="middle">POSAY</text></svg></div>
+          </div>
+        </div>
+        <div class="product-price-summary">
+          <div class="from">From</div>
+          <div class="price">₹1,449<span class="expand-icon">▾</span></div>
+          <div class="save">↓ Save ₹650 vs highest</div>
+        </div>
+      </div>
+      <div class="product-retailers">
+        <table class="retailer-table">
+          <thead><tr><th>Retailer</th><th>Stock</th><th>Shipping</th><th>Perks</th><th class="right">Price</th><th class="right"></th></tr></thead>
+          <tbody>
+            <tr class="retailer-row best">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FF1493"/><text x="16" y="22" font-family="sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">LF</text></svg></div><div><div class="name">Lookfantastic <span class="badge">Best</span></div><div class="sub">lookfantastic.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 5-7 days</td>
+              <td><div class="perks"><span class="perk code">LF15</span><span class="perk">3 samples</span></div></td>
+              <td class="price-cell"><span class="old">₹1,890</span>₹1,449</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FC2779"/><text x="16" y="22" font-family="sans-serif" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div><div><div class="name">Nykaa</div><div class="sub">nykaa.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹1k</td>
+              <td><div class="perks"><span class="perk">Loyalty pts</span></div></td>
+              <td class="price-cell">₹1,690</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="20" font-family="sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.5">TIRA</text></svg></div><div><div class="name">Tira</div><div class="sub">tirabeauty.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 2-3 days</td>
+              <td><div class="perks"><span class="perk">Tier discount</span></div></td>
+              <td class="price-cell">₹1,799</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#1A4A8F"/><text x="16" y="20" font-family="sans-serif" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">APOLLO</text></svg></div><div><div class="name">Apollo Pharmacy</div><div class="sub">apollopharmacy.in</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">₹40 · 1-2 days</td>
+              <td><div class="perks"><span class="perk">Authentic</span></div></td>
+              <td class="price-cell">₹1,950</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#fff" stroke="#1A4A8F" stroke-width="1"/><text x="16" y="14" font-family="sans-serif" font-size="4" font-weight="700" fill="#1A4A8F" text-anchor="middle">LA ROCHE</text><text x="16" y="22" font-family="sans-serif" font-size="4" font-weight="700" fill="#1A4A8F" text-anchor="middle">POSAY</text></svg></div><div><div class="name">LRP India</div><div class="sub">laroche-posay.in</div></div></div></td>
+              <td><span class="stock-tag low">Low stock</span></td>
+              <td class="ship-cell">Free over ₹1.5k</td>
+              <td><div class="perks"><span class="perk">Skin consult</span></div></td>
+              <td class="price-cell">₹2,099</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCT 3: Sol de Janeiro -->
+    <div class="product-card">
+      <div class="product-summary">
+        <div class="product-img bg-caramel">
+          <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="48" cy="60" rx="28" ry="6" fill="#C7956D" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="20" y="32" width="56" height="28" fill="#E8B86A" stroke="#2B1810" stroke-width="0.8"/>
+            <ellipse cx="48" cy="32" rx="28" ry="6" fill="#2B1810" stroke="#2B1810" stroke-width="0.8"/>
+            <ellipse cx="48" cy="30" rx="28" ry="5" fill="#3F2B20"/>
+            <rect x="26" y="38" width="44" height="18" fill="#FAF6F0" opacity="0.92"/>
+            <text x="48" y="44" font-family="serif" font-size="3" font-weight="700" fill="#A87850" text-anchor="middle" letter-spacing="0.4">SOL DE JANEIRO</text>
+            <text x="48" y="50" font-family="sans-serif" font-size="4" font-weight="900" fill="#2B1810" text-anchor="middle">Bum Bum Cream</text>
+            <text x="48" y="55" font-family="sans-serif" font-size="2.2" fill="#2B1810" text-anchor="middle">240 ml</text>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="brand">Sol de Janeiro</div>
+          <h3>Brazilian Bum Bum Cream</h3>
+          <div class="meta">
+            <span>240ml</span>
+            <span class="dot">·</span>
+            <span>Body cream</span>
+            <span class="dot">·</span>
+            <span>Vegan</span>
+          </div>
+        </div>
+        <div class="product-stores">
+          <span class="label">5 retailers</span>
+          <div class="stores-row">
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#1a1a1a"/><text x="12" y="11" font-family="sans-serif" font-size="3.5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.2">CULT</text><text x="12" y="18" font-family="serif" font-size="4" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="9" font-family="sans-serif" font-size="3.5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.2">SEPHORA</text><line x1="4" y1="12" x2="20" y2="12" stroke="#fff" stroke-width="0.4"/><text x="12" y="18" font-family="serif" font-size="4.5" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FC2779"/><text x="12" y="16" font-family="sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FFE08A"/><text x="12" y="11" font-family="serif" font-size="3.5" font-weight="700" fill="#A87850" text-anchor="middle">SOL</text><text x="12" y="20" font-family="serif" font-size="3.5" font-weight="700" fill="#2B1810" text-anchor="middle">JANEIRO</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FF1493"/><text x="12" y="16" font-family="sans-serif" font-size="11" font-weight="900" fill="#fff" text-anchor="middle">LF</text></svg></div>
+          </div>
+        </div>
+        <div class="product-price-summary">
+          <div class="from">From</div>
+          <div class="price">₹3,200<span class="expand-icon">▾</span></div>
+          <div class="save">↓ Save ₹1,500 vs highest</div>
+        </div>
+      </div>
+      <div class="product-retailers">
+        <table class="retailer-table">
+          <thead><tr><th>Retailer</th><th>Stock</th><th>Shipping</th><th>Perks</th><th class="right">Price</th><th class="right"></th></tr></thead>
+          <tbody>
+            <tr class="retailer-row best">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#1a1a1a"/><text x="16" y="14" font-family="sans-serif" font-size="5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">CULT</text><text x="16" y="24" font-family="serif" font-size="5.5" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div><div><div class="name">Cult Beauty <span class="badge">Best</span></div><div class="sub">cultbeauty.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹3k</td>
+              <td><div class="perks"><span class="perk code">CULT20</span><span class="perk">2 samples</span></div></td>
+              <td class="price-cell"><span class="old">₹4,700</span>₹3,200</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="12" font-family="sans-serif" font-size="5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.3">SEPHORA</text><line x1="6" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="0.6"/><text x="16" y="25" font-family="serif" font-size="6" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div><div><div class="name">Sephora India</div><div class="sub">sephora.nnnow.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹2k</td>
+              <td><div class="perks"><span class="perk">Insider 10%</span></div></td>
+              <td class="price-cell">₹3,800</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FC2779"/><text x="16" y="22" font-family="sans-serif" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div><div><div class="name">Nykaa Luxe</div><div class="sub">luxe.nykaa.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 2-4 days</td>
+              <td><div class="perks"><span class="perk">Prive members</span></div></td>
+              <td class="price-cell">₹3,950</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FFE08A"/><text x="16" y="14" font-family="serif" font-size="5" font-weight="700" fill="#A87850" text-anchor="middle">SOL DE</text><text x="16" y="25" font-family="serif" font-size="5" font-weight="700" fill="#2B1810" text-anchor="middle">JANEIRO</text></svg></div><div><div class="name">Sol de Janeiro</div><div class="sub">soldejaneiro.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹2.5k</td>
+              <td><div class="perks"><span class="perk">Travel mini</span></div></td>
+              <td class="price-cell">₹4,200</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FF1493"/><text x="16" y="22" font-family="sans-serif" font-size="14" font-weight="900" fill="#fff" text-anchor="middle">LF</text></svg></div><div><div class="name">Lookfantastic</div><div class="sub">lookfantastic.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">+₹450 ship</td>
+              <td><div class="perks"><span class="perk code">LF15</span></div></td>
+              <td class="price-cell">₹4,700</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCT 4: Olaplex -->
+    <div class="product-card">
+      <div class="product-summary">
+        <div class="product-img bg-sage">
+          <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 30 30 Q 30 22 36 20 L 60 20 Q 66 22 66 30 L 66 80 Q 66 84 60 84 L 36 84 Q 30 84 30 80 Z" fill="#FAF6F0" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="40" y="14" width="16" height="6" rx="1" fill="#FAF6F0" stroke="#2B1810" stroke-width="0.8"/>
+            <rect x="34" y="36" width="28" height="38" fill="#fff" stroke="#2B1810" stroke-width="0.4"/>
+            <text x="48" y="44" font-family="sans-serif" font-size="5" font-weight="900" fill="#2B1810" text-anchor="middle" letter-spacing="0.4">OLAPLEX</text>
+            <line x1="38" y1="46" x2="58" y2="46" stroke="#2B1810" stroke-width="0.3"/>
+            <text x="48" y="60" font-family="sans-serif" font-size="14" font-weight="900" fill="#2B1810" text-anchor="middle">N°3</text>
+            <text x="48" y="68" font-family="sans-serif" font-size="2.5" font-weight="600" fill="#2B1810" text-anchor="middle">HAIR PERFECTOR</text>
+          </svg>
+        </div>
+        <div class="product-info">
+          <div class="brand">Olaplex</div>
+          <h3>No. 3 Hair Perfector — Bond Repair</h3>
+          <div class="meta">
+            <span>100ml</span>
+            <span class="dot">·</span>
+            <span>Hair treatment</span>
+            <span class="dot">·</span>
+            <span>Color-safe</span>
+          </div>
+        </div>
+        <div class="product-stores">
+          <span class="label">5 retailers</span>
+          <div class="stores-row">
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#1a1a1a"/><text x="12" y="11" font-family="sans-serif" font-size="3.5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.2">CULT</text><text x="12" y="18" font-family="serif" font-size="4" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="15" font-family="sans-serif" font-size="7" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">TIRA</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#000"/><text x="12" y="9" font-family="sans-serif" font-size="3.5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.2">SEPHORA</text><line x1="4" y1="12" x2="20" y2="12" stroke="#fff" stroke-width="0.4"/><text x="12" y="18" font-family="serif" font-size="4.5" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FC2779"/><text x="12" y="16" font-family="sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div>
+            <div class="store-pip"><svg viewBox="0 0 24 24"><rect width="24" height="24" fill="#FAF6F0"/><text x="12" y="11" font-family="sans-serif" font-size="4" font-weight="900" fill="#2B1810" text-anchor="middle" letter-spacing="0.3">OLAPLEX</text><text x="12" y="20" font-family="sans-serif" font-size="7" font-weight="900" fill="#2B1810" text-anchor="middle">N°3</text></svg></div>
+          </div>
+        </div>
+        <div class="product-price-summary">
+          <div class="from">From</div>
+          <div class="price">₹1,920<span class="expand-icon">▾</span></div>
+          <div class="save">↓ Save ₹880 vs highest</div>
+        </div>
+      </div>
+      <div class="product-retailers">
+        <table class="retailer-table">
+          <thead><tr><th>Retailer</th><th>Stock</th><th>Shipping</th><th>Perks</th><th class="right">Price</th><th class="right"></th></tr></thead>
+          <tbody>
+            <tr class="retailer-row best">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#1a1a1a"/><text x="16" y="14" font-family="sans-serif" font-size="5" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.3">CULT</text><text x="16" y="24" font-family="serif" font-size="5.5" font-style="italic" fill="#fff" text-anchor="middle">beauty</text></svg></div><div><div class="name">Cult Beauty <span class="badge">Best</span></div><div class="sub">cultbeauty.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹3k</td>
+              <td><div class="perks"><span class="perk code">FIRST15</span><span class="perk">Bundle save</span></div></td>
+              <td class="price-cell"><span class="old">₹2,400</span>₹1,920</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="20" font-family="sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="0.5">TIRA</text></svg></div><div><div class="name">Tira</div><div class="sub">tirabeauty.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 2-3 days</td>
+              <td><div class="perks"><span class="perk">Bundle 1+2+3</span></div></td>
+              <td class="price-cell">₹2,150</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#000"/><text x="16" y="12" font-family="sans-serif" font-size="5" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="0.3">SEPHORA</text><line x1="6" y1="16" x2="26" y2="16" stroke="#fff" stroke-width="0.6"/><text x="16" y="25" font-family="serif" font-size="6" font-style="italic" fill="#fff" text-anchor="middle">Beauty</text></svg></div><div><div class="name">Sephora India</div><div class="sub">sephora.nnnow.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free · 3-5 days</td>
+              <td><div class="perks"><span class="perk">Insider</span></div></td>
+              <td class="price-cell">₹2,400</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FC2779"/><text x="16" y="22" font-family="sans-serif" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" font-style="italic">N</text></svg></div><div><div class="name">Nykaa</div><div class="sub">nykaa.com</div></div></div></td>
+              <td><span class="stock-tag in">In stock</span></td>
+              <td class="ship-cell">Free over ₹1k</td>
+              <td><div class="perks"><span class="perk">Loyalty 5%</span></div></td>
+              <td class="price-cell">₹2,500</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+            <tr class="retailer-row">
+              <td><div class="retailer-cell-name"><div class="retailer-logo"><svg viewBox="0 0 32 32"><rect width="32" height="32" fill="#FAF6F0" stroke="#2B1810" stroke-width="0.5"/><text x="16" y="14" font-family="sans-serif" font-size="5" font-weight="900" fill="#2B1810" text-anchor="middle" letter-spacing="0.3">OLAPLEX</text><text x="16" y="24" font-family="sans-serif" font-size="9" font-weight="900" fill="#2B1810" text-anchor="middle">N°3</text></svg></div><div><div class="name">Olaplex India</div><div class="sub">olaplex.com</div></div></div></td>
+              <td><span class="stock-tag low">Low stock</span></td>
+              <td class="ship-cell">₹99 · 4-6 days</td>
+              <td><div class="perks"><span class="perk">Authentic</span></div></td>
+              <td class="price-cell">₹2,800</td>
+              <td class="go-cell"><a href="#" class="go-btn">Visit store →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDING -->
+<section class="trending-section" id="trending">
+  <div class="section-inner">
+    <div class="section-head reveal">
+      <div class="section-head-left">
+        <div class="section-eyebrow">↗ Trending categories</div>
+        <h2>What India's <span class="italic">hunting</span> this week.</h2>
+        <p>Live category leaderboards, refreshed every 6 hours from search and click activity across the index.</p>
+      </div>
+      <div class="section-head-right">
+        <span>Updated 2hr ago</span>
+      </div>
+    </div>
+
+    <div class="trending-grid">
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#F4DCD9"/><circle cx="100" cy="105" r="55" fill="#A85C57" opacity="0.85"/><ellipse cx="85" cy="90" rx="14" ry="20" fill="#FAF6F0" opacity="0.4"/></svg></div>
+        <div class="body">
+          <div class="cat">Lip · Makeup</div>
+          <h4>Liquid lipsticks</h4>
+          <div class="stats"><span>64 products</span><span class="save">From ₹890</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#F4ECDD"/><rect x="80" y="50" width="40" height="100" rx="3" fill="#C7956D" stroke="#2B1810" stroke-width="0.8"/><rect x="85" y="30" width="30" height="22" rx="2" fill="#2B1810"/><rect x="85" y="80" width="30" height="50" fill="#fff" opacity="0.95"/><text x="100" y="105" font-family="serif" font-size="7" font-style="italic" fill="#A87850" text-anchor="middle">vit C</text></svg></div>
+        <div class="body">
+          <div class="cat">Skincare</div>
+          <h4>Vitamin C serums</h4>
+          <div class="stats"><span>142 products</span><span class="save">From ₹620</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#E5EBDD"/><rect x="70" y="60" width="60" height="80" rx="3" fill="#5C6B4F" opacity="0.6" stroke="#2B1810" stroke-width="0.8"/><rect x="85" y="40" width="30" height="22" rx="2" fill="#2B1810"/><rect x="80" y="85" width="40" height="40" fill="#FAF6F0" opacity="0.85"/></svg></div>
+        <div class="body">
+          <div class="cat">Fragrance</div>
+          <h4>Niche perfumes</h4>
+          <div class="stats"><span>88 products</span><span class="save">From ₹4,200</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#FAF6F0"/><ellipse cx="100" cy="120" rx="48" ry="12" fill="#C7956D" stroke="#2B1810" stroke-width="0.8"/><rect x="52" y="60" width="96" height="60" fill="#E8B86A" stroke="#2B1810" stroke-width="0.8"/><ellipse cx="100" cy="60" rx="48" ry="10" fill="#2B1810"/></svg></div>
+        <div class="body">
+          <div class="cat">Body</div>
+          <h4>Glow body creams</h4>
+          <div class="stats"><span>52 products</span><span class="save">From ₹980</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#F4DCD9"/><ellipse cx="100" cy="100" rx="40" ry="55" fill="#FAF6F0" stroke="#2B1810" stroke-width="0.8"/><ellipse cx="90" cy="85" rx="6" ry="8" fill="#2B1810"/><ellipse cx="110" cy="85" rx="6" ry="8" fill="#2B1810"/><path d="M 85 115 Q 100 122 115 115" fill="none" stroke="#A85C57" stroke-width="2"/></svg></div>
+        <div class="body">
+          <div class="cat">Eye · Makeup</div>
+          <h4>Cream bronzers</h4>
+          <div class="stats"><span>38 products</span><span class="save">From ₹1,150</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#FAF6F0"/><path d="M 100 50 Q 60 80 60 130 Q 60 160 100 160 Q 140 160 140 130 Q 140 80 100 50 Z" fill="#5C6B4F" opacity="0.4" stroke="#2B1810" stroke-width="0.8"/></svg></div>
+        <div class="body">
+          <div class="cat">Tools</div>
+          <h4>Gua sha &amp; rollers</h4>
+          <div class="stats"><span>28 products</span><span class="save">From ₹560</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#E5EBDD"/><rect x="75" y="50" width="50" height="100" rx="4" fill="#FAF6F0" stroke="#2B1810" stroke-width="0.8"/><rect x="82" y="30" width="36" height="22" rx="2" fill="#5C6B4F"/><rect x="80" y="75" width="40" height="60" fill="#fff" opacity="0.95"/><text x="100" y="100" font-family="sans-serif" font-size="6" font-weight="900" fill="#5C6B4F" text-anchor="middle">SPF</text><text x="100" y="115" font-family="sans-serif" font-size="11" font-weight="900" fill="#2B1810" text-anchor="middle">50+</text></svg></div>
+        <div class="body">
+          <div class="cat">Skincare</div>
+          <h4>Sunscreens</h4>
+          <div class="stats"><span>96 products</span><span class="save">From ₹420</span></div>
+        </div>
+      </div>
+      <div class="trending-card">
+        <div class="thumb"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#F4ECDD"/><rect x="80" y="40" width="40" height="120" rx="6" fill="#A85C57" stroke="#2B1810" stroke-width="0.8"/><rect x="84" y="32" width="32" height="12" rx="2" fill="#2B1810"/><rect x="85" y="80" width="30" height="50" fill="#fff" opacity="0.95"/><text x="100" y="100" font-family="sans-serif" font-size="6" font-weight="900" fill="#A85C57" text-anchor="middle">No.3</text></svg></div>
+        <div class="body">
+          <div class="cat">Haircare</div>
+          <h4>Bond repair</h4>
+          <div class="stats"><span>52 products</span><span class="save">From ₹980</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WEEKLY DROPS -->
+<section id="drops">
+  <div class="section-inner">
+    <div class="section-head reveal">
+      <div class="section-head-left">
+        <div class="section-eyebrow">★ This week's drops</div>
+        <h2>The 8 biggest <span class="italic">price drops</span>.</h2>
+        <p>Refreshed every Monday at 9 AM IST. These are the steepest verified drops across our index, hand-checked for authenticity and stock.</p>
+      </div>
+      <div class="section-head-right">
+        <span>Week 18 · 2026</span>
+      </div>
+    </div>
+
+    <div class="drops-list">
+      <div class="drop-item">
+        <div class="drop-rank">i</div>
+        <div class="drop-info">
+          <div class="brand">Maison Margiela</div>
+          <div class="name">Replica Beach Walk EDT 100ml</div>
+          <div class="at">at <strong>Sephora India</strong> · Spring sale</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹9,200</div>
+          <div class="was">was ₹12,300</div>
+          <div class="save">↓ 25%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">ii</div>
+        <div class="drop-info">
+          <div class="brand">Drunk Elephant</div>
+          <div class="name">C-Firma Fresh Vitamin C Serum</div>
+          <div class="at">at <strong>Tira</strong> · Skincare event</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹6,400</div>
+          <div class="was">was ₹8,200</div>
+          <div class="save">↓ 22%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">iii</div>
+        <div class="drop-info">
+          <div class="brand">Sol de Janeiro</div>
+          <div class="name">Bum Bum Cream 240ml</div>
+          <div class="at">at <strong>Cult Beauty</strong> · Code CULT20</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹3,200</div>
+          <div class="was">was ₹4,700</div>
+          <div class="save">↓ 32%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">iv</div>
+        <div class="drop-info">
+          <div class="brand">Olaplex</div>
+          <div class="name">No.3 Hair Perfector 100ml</div>
+          <div class="at">at <strong>Cult Beauty</strong> · Bundle save</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹1,920</div>
+          <div class="was">was ₹2,800</div>
+          <div class="save">↓ 31%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">v</div>
+        <div class="drop-info">
+          <div class="brand">Charlotte Tilbury</div>
+          <div class="name">Pillow Talk Lipstick</div>
+          <div class="at">at <strong>Tira</strong> · Code TIRA20</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹2,640</div>
+          <div class="was">was ₹4,000</div>
+          <div class="save">↓ 34%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">vi</div>
+        <div class="drop-info">
+          <div class="brand">Rare Beauty</div>
+          <div class="name">Soft Pinch Liquid Blush — Joy</div>
+          <div class="at">at <strong>Nykaa</strong> · Code NYKAA15</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹1,690</div>
+          <div class="was">was ₹2,500</div>
+          <div class="save">↓ 32%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">vii</div>
+        <div class="drop-info">
+          <div class="brand">La Roche-Posay</div>
+          <div class="name">Anthelios UVMune 400 SPF50+</div>
+          <div class="at">at <strong>Lookfantastic</strong> · Code LF15</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹1,449</div>
+          <div class="was">was ₹2,099</div>
+          <div class="save">↓ 31%</div>
+        </div>
+      </div>
+      <div class="drop-item">
+        <div class="drop-rank">viii</div>
+        <div class="drop-info">
+          <div class="brand">Laneige</div>
+          <div class="name">Lip Sleeping Mask — Berry</div>
+          <div class="at">at <strong>Nykaa</strong> · K-beauty week</div>
+        </div>
+        <div class="drop-price">
+          <div class="now">₹1,580</div>
+          <div class="was">was ₹2,200</div>
+          <div class="save">↓ 28%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ALERTS / NEWSLETTER -->
+<section class="alerts-section" id="alerts">
+  <div class="alerts-grid">
+    <div class="alerts-left reveal">
+      <div class="section-eyebrow">↘ Price-drop alerts</div>
+      <h2>Never pay full price <span class="italic">again.</span></h2>
+      <p class="lead">Tell us what you want and your target price. We'll watch every retailer in our index and ping you the moment one drops below your number — including pre-sale leaks 12 hours early.</p>
+      <form class="alerts-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='✓ Watching';">
+        <input type="email" placeholder="your@email.com" required />
+        <button type="submit">Set alert</button>
+      </form>
+      <div class="alerts-meta">Free · No spam · Unsubscribe anytime</div>
+    </div>
+    <div class="alerts-features">
+      <div class="alerts-feature">
+        <div class="num">i.</div>
+        <div>
+          <h4>Wishlist tracking</h4>
+          <p>Add anything to your list and we'll watch it across all 240+ retailers — no need to refresh, refresh, refresh.</p>
+        </div>
+      </div>
+      <div class="alerts-feature">
+        <div class="num">ii.</div>
+        <div>
+          <h4>Set your target price</h4>
+          <p>Pick the number you'd actually pay. We notify you when any retailer hits or beats it, with the active code already in.</p>
+        </div>
+      </div>
+      <div class="alerts-feature">
+        <div class="num">iii.</div>
+        <div>
+          <h4>Sale leaks, 12 hours early</h4>
+          <p>Our crawlers catch upcoming-sale data before retailers light up the homepage. You shop first, hype second.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="logo">Saiko</a>
+      <p>The independent beauty price index for India. Live across 240+ retailers, updated every 4 hours. Bombay · Established 2026.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Browse</h5>
+      <a href="#">Skincare</a>
+      <a href="#">Makeup</a>
+      <a href="#">Fragrance</a>
+      <a href="#">Haircare</a>
+      <a href="#">Body &amp; tools</a>
+    </div>
+    <div class="footer-col">
+      <h5>Saiko</h5>
+      <a href="#">How we make money</a>
+      <a href="#">Editorial standards</a>
+      <a href="#">Retailers we track</a>
+      <a href="#">Press kit</a>
+    </div>
+    <div class="footer-col">
+      <h5>Connect</h5>
+      <a href="#">Instagram</a>
+      <a href="#">Substack</a>
+      <a href="#">Contact</a>
+      <a href="#">Submit a retailer</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Saiko Index Pvt. Ltd.</span>
+    <span>Privacy · Terms · Cookies</span>
+  </div>
+</footer>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="mobile-drawer" id="mobileDrawer">
+  <a href="#compare">Compare prices</a>
+  <a href="#trending">Trending categories</a>
+  <a href="#drops">This week's drops</a>
+  <a href="#alerts">Get price alerts</a>
+  <a href="#" id="drawerLogin" style="color:var(--brick);">Log in</a>
+</aside>
+
+<!-- LOGIN MODAL -->
+<div class="modal-backdrop" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <div class="modal-eyebrow">Welcome back</div>
+    <h3>Log in to <span class="italic">Saiko</span></h3>
+    <p class="lead">Save your wishlist, set price alerts, and get the weekly drops in your inbox.</p>
+    <form onsubmit="event.preventDefault();this.querySelector('button.modal-submit').textContent='✓ Logged in';">
+      <div class="modal-field">
+        <label>Email</label>
+        <input type="email" placeholder="your@email.com" required />
+      </div>
+      <div class="modal-field">
+        <label>Password</label>
+        <input type="password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="modal-submit">Log in</button>
+    </form>
+    <div class="modal-divider">Or continue with</div>
+    <button class="modal-social">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <button class="modal-social">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+      Continue with Apple
+    </button>
+    <div class="modal-foot">New to Saiko? <a href="#">Create an account</a></div>
+  </div>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-content">
+    <button class="modal-close" id="lightboxClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <div class="lightbox-img" id="lightboxImg"></div>
+    <div class="lightbox-info">
+      <div class="brand" id="lightboxBrand"></div>
+      <h3 id="lightboxTitle"></h3>
+      <div class="meta" id="lightboxMeta"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Reveal on scroll
+  const revObs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+  // Tab switching (visual only)
+  document.querySelectorAll('.search-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // ─── LOGIN MODAL ───
+  const loginBtn=document.getElementById('loginBtn');
+  const loginModal=document.getElementById('loginModal');
+  const modalClose=document.getElementById('modalClose');
+  const drawerLogin=document.getElementById('drawerLogin');
+  function openLogin(){loginModal.classList.add('open');document.body.style.overflow='hidden';}
+  function closeLogin(){loginModal.classList.remove('open');document.body.style.overflow='';}
+  loginBtn.addEventListener('click',openLogin);
+  drawerLogin&&drawerLogin.addEventListener('click',(e)=>{e.preventDefault();closeDrawer();openLogin();});
+  modalClose.addEventListener('click',closeLogin);
+  loginModal.addEventListener('click',(e)=>{if(e.target===loginModal)closeLogin();});
+
+  // ─── MOBILE DRAWER ───
+  const mobileMenu=document.getElementById('mobileMenu');
+  const mobileDrawer=document.getElementById('mobileDrawer');
+  const drawerBackdrop=document.getElementById('drawerBackdrop');
+  function openDrawer(){
+    mobileDrawer.classList.add('open');
+    drawerBackdrop.classList.add('open');
+    mobileMenu.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    mobileDrawer.classList.remove('open');
+    drawerBackdrop.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  mobileMenu.addEventListener('click',()=>{
+    if(mobileDrawer.classList.contains('open'))closeDrawer();else openDrawer();
+  });
+  drawerBackdrop.addEventListener('click',closeDrawer);
+  mobileDrawer.querySelectorAll('a:not(#drawerLogin)').forEach(a=>{
+    a.addEventListener('click',closeDrawer);
+  });
+
+  // ─── IMAGE LIGHTBOX ───
+  const lightbox=document.getElementById('lightbox');
+  const lightboxImg=document.getElementById('lightboxImg');
+  const lightboxBrand=document.getElementById('lightboxBrand');
+  const lightboxTitle=document.getElementById('lightboxTitle');
+  const lightboxMeta=document.getElementById('lightboxMeta');
+  const lightboxClose=document.getElementById('lightboxClose');
+
+  function closeLightbox(){lightbox.classList.remove('open');document.body.style.overflow='';}
+  lightboxClose.addEventListener('click',closeLightbox);
+  lightbox.addEventListener('click',(e)=>{if(e.target===lightbox)closeLightbox();});
+
+  // Inject zoom hint + click handler on every product image
+  document.querySelectorAll('.product-card').forEach(card=>{
+    const imgEl=card.querySelector('.product-img');
+    const info=card.querySelector('.product-info');
+    if(!imgEl||!info)return;
+
+    // Add zoom hint icon
+    const hint=document.createElement('div');
+    hint.className='zoom-hint';
+    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/><path d="m21 21-4.3-4.3"/></svg>';
+    imgEl.appendChild(hint);
+
+    imgEl.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      // Clone the SVG into the lightbox
+      const svg=imgEl.querySelector('svg');
+      lightboxImg.innerHTML='';
+      lightboxImg.style.background=getComputedStyle(imgEl).background;
+      const clonedSvg=svg.cloneNode(true);
+      clonedSvg.removeAttribute('width');
+      clonedSvg.removeAttribute('height');
+      lightboxImg.appendChild(clonedSvg);
+
+      lightboxBrand.textContent=info.querySelector('.brand').textContent;
+      lightboxTitle.textContent=info.querySelector('h3').textContent;
+      lightboxMeta.innerHTML=info.querySelector('.meta').innerHTML;
+
+      lightbox.classList.add('open');
+      document.body.style.overflow='hidden';
+    });
+  });
+
+  // ─── LOADING SEQUENCE ───
+  const loadingBar=document.getElementById('loadingBar');
+  const loadingBarFill=document.getElementById('loadingBarFill');
+  const loadingStatus=document.getElementById('loadingStatus');
+  const loadingText=document.getElementById('loadingText');
+  const loadingPct=document.getElementById('loadingPct');
+
+  function runLoadingSequence(query){
+    loadingBar.classList.add('active');
+    loadingStatus.classList.add('active');
+    loadingBarFill.style.width='0%';
+
+    const stages=[
+      {pct:18,msg:'Querying retailer index'},
+      {pct:42,msg:`Fetching prices${query?' for "'+query+'"':' from 240 retailers'}`},
+      {pct:68,msg:'Calculating shipping & active codes'},
+      {pct:88,msg:'Verifying stock & authenticity'},
+      {pct:100,msg:'Done — sorting by best price'}
+    ];
+
+    let i=0;
+    function step(){
+      if(i>=stages.length){
+        setTimeout(()=>{
+          loadingBar.classList.remove('active');
+          loadingStatus.classList.remove('active');
+        },400);
+        return;
+      }
+      const s=stages[i];
+      loadingBarFill.style.width=s.pct+'%';
+      loadingText.textContent=s.msg;
+      loadingPct.textContent=s.pct+'%';
+      i++;
+      setTimeout(step,420+Math.random()*180);
+    }
+    step();
+  }
+
+  // ─── SEARCH BUTTON — NEW TAB + LOADING ───
+  const searchBtn=document.getElementById('searchBtn');
+  const searchInput=document.querySelector('.search-input');
+  const compareSection=document.getElementById('compare');
+
+  function triggerSearch(query){
+    // Open results in a new tab — same page with a hash for context
+    const newUrl=window.location.href.split('#')[0]+'#compare';
+    const newTab=window.open(newUrl,'_blank');
+    // Also run the loading sequence in current tab so user sees feedback
+    compareSection.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>runLoadingSequence(query),300);
+  }
+
+  searchBtn.addEventListener('click',()=>{
+    const q=searchInput.value.trim();
+    triggerSearch(q);
+  });
+  searchInput.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      triggerSearch(searchInput.value.trim());
+    }
+  });
+  // Quick chips trigger search too
+  document.querySelectorAll('.quick-chip').forEach(chip=>{
+    chip.addEventListener('click',(e)=>{
+      e.preventDefault();
+      searchInput.value=chip.textContent.trim();
+      triggerSearch(chip.textContent.trim());
+    });
+  });
+
+  // ─── PRODUCT CARD CLICK — NEW TAB + LOADING ON EXPAND ───
+  document.querySelectorAll('.product-summary').forEach(summary=>{
+    // Replace inline onclick with controlled handler
+    summary.onclick=null;
+    summary.addEventListener('click',(e)=>{
+      // Don't trigger when clicking the image (lightbox handles it)
+      if(e.target.closest('.product-img'))return;
+
+      const card=summary.parentElement;
+      const wasOpen=card.classList.contains('open');
+      const productName=card.querySelector('.product-info h3').textContent;
+
+      // Open in new tab
+      const newUrl=window.location.href.split('#')[0]+'#compare';
+      window.open(newUrl,'_blank');
+
+      // Toggle expansion in current tab
+      card.classList.toggle('open');
+
+      // If we just opened it, run loading
+      if(!wasOpen){
+        runLoadingSequence(productName);
+      }
+    });
+  });
+
+  // ─── ESCAPE KEY ───
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape'){
+      if(lightbox.classList.contains('open'))closeLightbox();
+      else if(loginModal.classList.contains('open'))closeLogin();
+      else if(mobileDrawer.classList.contains('open'))closeDrawer();
+    }
+  });
+</script>
+
+</body>
+</html>
